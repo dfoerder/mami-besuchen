@@ -1,0 +1,17 @@
+{
+  "name": "Mami besuchen",
+  "short_name": "Mami besuchen",
+  "description": "Gemeinsamer Besuchskalender für Mami im Pflegeheim",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f1e9",
+  "theme_color": "#7a9a5a",
+  "orientation": "portrait",
+  "lang": "de",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
