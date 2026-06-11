@@ -117,6 +117,56 @@
 
     .foot{text-align:center;font-size:11.5px;color:var(--muted);padding:6px 0 24px}
     .loading{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px}
+
+    /* Ansicht-Umschalter */
+    .viewsw{display:flex;gap:6px;padding:11px 14px 3px}
+    .vbtn{flex:1;padding:9px 0;border-radius:12px;font-size:14px;font-weight:700;
+      color:var(--muted);background:var(--card);box-shadow:var(--shadow)}
+    .vbtn.on{background:var(--accent);color:#fff}
+
+    /* Personen-Punkte (Initialen) */
+    .pdot{width:19px;height:19px;border-radius:50%;font-size:10.5px;font-weight:700;color:#fff;
+      display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+    .mpdot{width:14px;height:14px;border-radius:50%;font-size:8.5px;font-weight:700;color:#fff;
+      display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+
+    /* Legende */
+    .legend{display:flex;flex-wrap:wrap;gap:9px 13px;justify-content:center;padding:10px 16px 2px}
+    .legend .li{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);font-weight:600}
+    .legend .ldot{width:11px;height:11px;border-radius:50%}
+
+    /* Wochenansicht */
+    .weekgrid{padding:8px 12px 26px}
+    .wkrow{display:grid;grid-template-columns:44px repeat(4,1fr);gap:4px;margin-bottom:4px}
+    .wkhead{position:sticky;top:0;z-index:5;background:var(--bg);padding-top:2px}
+    .wkhead .wkh{text-align:center;padding:2px 0}
+    .wkhead .wkh .i{font-size:16px;line-height:1.3}
+    .wkhead .wkh .l{font-size:9px;color:var(--muted);font-weight:700}
+    .wkday{background:var(--card);border-radius:11px;box-shadow:var(--shadow);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5px 0}
+    .wkday:disabled{opacity:.3}
+    .wkday .w{font-size:9.5px;color:var(--muted);font-weight:700;text-transform:uppercase}
+    .wkday .n{font-size:16px;font-weight:700}
+    .wkrow.we .wkday .n{color:#b06a4a}
+    .wkrow.today .wkday{outline:2px solid var(--accent);outline-offset:-1px}
+    .wkcell{background:var(--card);border-radius:11px;box-shadow:var(--shadow);min-height:40px;
+      padding:5px 4px;display:flex;flex-wrap:wrap;gap:3px;align-content:flex-start;justify-content:center}
+    .wkcell:disabled,.wkcell.empty{background:var(--bg2);box-shadow:none}
+
+    /* Monatsansicht */
+    .monthgrid{padding:8px 12px 26px}
+    .mwk{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+    .mhead{font-size:10.5px;color:var(--muted);font-weight:700;text-align:center;padding:3px 0 5px;text-transform:uppercase}
+    .mcell{background:var(--card);border-radius:10px;box-shadow:var(--shadow);min-height:56px;
+      padding:3px 3px 4px;display:flex;flex-direction:column;gap:3px;text-align:left}
+    .mcell.out{background:transparent;box-shadow:none}
+    .mcell.empty{background:var(--warn-bg)}
+    .mcell .md{font-size:11px;font-weight:700;color:var(--text);text-align:right;padding-right:1px}
+    .mcell.we .md{color:#b06a4a}
+    .mcell.out .md{color:var(--muted2,#b0a58e);opacity:.5}
+    .mcell.today{outline:2px solid var(--accent);outline-offset:-1px}
+    .mpeople{display:flex;flex-wrap:wrap;gap:2px;justify-content:flex-start}
+    .hint{text-align:center;font-size:12px;color:var(--muted);padding:4px 24px 0}
   </style>
 </head>
 <body>
@@ -164,6 +214,11 @@
       return ALL_DAYS.includes(k) ? k : null;
     })();
     const EMPTY_DAY = { morgen: [], mittag: [], nachmittag: [], abend: [] };
+    const EXTRA_COLOR = "#8a7e9e"; // Farbe für Zusatzpersonen
+
+    const addDays   = (d, n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+    const mondayOf  = d => { const x = new Date(d); x.setDate(x.getDate() - ((x.getDay()+6)%7)); x.setHours(0,0,0,0); return x; };
+    const clampKey  = d => { if (d < START) return toKey(START); if (d > END) return toKey(END); return toKey(d); };
 
     // ── Speicher-Schicht (Firebase oder lokaler Vorschaumodus) ──
     const cfg = window.FIREBASE_CONFIG || {};
@@ -225,6 +280,117 @@
       const s = SIBLINGS.find(s => s.name === name);
       return s ? s.color : null;
     }
+    const initialOf = name => (name.trim()[0] || "?").toUpperCase();
+
+    // Liste farbiger Initial-Punkte für eine Namensliste
+    function Pdots({ names, cls }) {
+      return names.map((n, i) => (
+        <span key={n + i} className={cls}
+          style={{ background: colorOf(n) || EXTRA_COLOR }} title={n}>
+          {initialOf(n)}
+        </span>
+      ));
+    }
+
+    function Legend() {
+      return (
+        <div className="legend">
+          {SIBLINGS.map(s => (
+            <span key={s.name} className="li">
+              <span className="ldot" style={{ background: s.color }}></span>{s.name}
+            </span>
+          ))}
+        </div>
+      );
+    }
+
+    function WeekView({ data, sel, onPick }) {
+      const mon  = mondayOf(fromKey(sel));
+      const days = Array.from({ length: 7 }, (_, i) => addDays(mon, i));
+      return (
+        <div>
+          <Legend />
+          <div className="weekgrid">
+            <div className="wkrow wkhead">
+              <div></div>
+              {SLOTS.map(s => (
+                <div key={s.key} className="wkh">
+                  <div className="i">{s.icon}</div><div className="l">{s.label}</div>
+                </div>
+              ))}
+            </div>
+            {days.map(d => {
+              const key = toKey(d), wd = d.getDay();
+              const inRange = d >= START && d <= END;
+              const dd = (data && data[key]) || EMPTY_DAY;
+              const cls = ["wkrow"];
+              if (wd === 0 || wd === 6) cls.push("we");
+              if (key === todayKey) cls.push("today");
+              return (
+                <div key={key} className={cls.join(" ")}>
+                  <button className="wkday" disabled={!inRange} onClick={() => onPick(key)}>
+                    <span className="w">{WD_S[wd]}</span>
+                    <span className="n">{d.getDate()}</span>
+                  </button>
+                  {SLOTS.map(s => {
+                    const names = dd[s.key] || [];
+                    return (
+                      <button key={s.key} className={"wkcell" + (names.length ? "" : " empty")}
+                        disabled={!inRange} onClick={() => onPick(key)}>
+                        <Pdots names={names} cls="pdot" />
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    function MonthView({ data, sel, onPick }) {
+      const sd = fromKey(sel), y = sd.getFullYear(), m = sd.getMonth();
+      const first = new Date(y, m, 1);
+      const lead  = (first.getDay() + 6) % 7;
+      const dim   = new Date(y, m + 1, 0).getDate();
+      const weeks = Math.ceil((lead + dim) / 7);
+      const c0    = addDays(first, -lead);
+      const cells = Array.from({ length: weeks * 7 }, (_, i) => addDays(c0, i));
+      const HEAD  = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+      return (
+        <div>
+          <Legend />
+          <div className="monthgrid">
+            <div className="mwk">{HEAD.map(h => <div key={h} className="mhead">{h}</div>)}</div>
+            <div className="mwk">
+              {cells.map((d, i) => {
+                const key = toKey(d), wd = d.getDay();
+                const inMonth = d.getMonth() === m;
+                const inRange = d >= START && d <= END;
+                const dd = (data && data[key]) || EMPTY_DAY;
+                const people = [];
+                SLOTS.forEach(s => (dd[s.key] || []).forEach(n => { if (!people.includes(n)) people.push(n); }));
+                const tappable = inMonth && inRange;
+                const cls = ["mcell"];
+                if (!tappable) cls.push("out");
+                else if (people.length === 0) cls.push("empty");
+                if (wd === 0 || wd === 6) cls.push("we");
+                if (key === todayKey) cls.push("today");
+                return (
+                  <button key={i} className={cls.join(" ")} disabled={!tappable}
+                    onClick={() => onPick(key)}>
+                    <span className="md">{d.getDate()}</span>
+                    {inMonth &&
+                      <span className="mpeople"><Pdots names={people} cls="mpdot" /></span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     function Slot({ dateKey, slot, names }) {
       const [txt, setTxt] = useState("");
@@ -281,19 +447,23 @@
       );
     }
 
+    const VIEWS = [["tag","Tag"],["woche","Woche"],["monat","Monat"]];
+
     function App() {
       const [data, setData] = useState(null);
       const [sel, setSel] = useState(todayKey || ALL_DAYS[0]);
+      const [view, setView] = useState("tag");
       const stripRef = useRef(null);
       const dayRefs = useRef({});
 
       useEffect(() => Store.subscribe(setData), []);
 
-      // ausgewählten Tag im Streifen sichtbar machen
+      // ausgewählten Tag im Streifen sichtbar machen (nur Tagesansicht)
       useEffect(() => {
+        if (view !== "tag") return;
         const el = dayRefs.current[sel];
         if (el) el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
-      }, [sel]);
+      }, [sel, view]);
 
       const totalOf = key => {
         const d = data && data[key];
@@ -301,15 +471,36 @@
         return SLOTS.reduce((a, s) => a + (d[s.key] ? d[s.key].length : 0), 0);
       };
 
-      const idx = ALL_DAYS.indexOf(sel);
-      const go = delta => {
-        const ni = idx + delta;
-        if (ni >= 0 && ni < ALL_DAYS.length) setSel(ALL_DAYS[ni]);
+      // Navigationsziel je nach Ansicht (Tag/Woche/Monat), auf Bereich begrenzt
+      const targetFor = dir => {
+        const d = fromKey(sel);
+        if (view === "monat") d.setMonth(d.getMonth() + dir);
+        else d.setDate(d.getDate() + dir * (view === "woche" ? 7 : 1));
+        return clampKey(d);
       };
+      const prevTarget = targetFor(-1), nextTarget = targetFor(1);
+
+      const pickDay = key => { setSel(key); setView("tag"); };
 
       const selDate = fromKey(sel);
       const selDay = (data && data[sel]) || EMPTY_DAY;
       const selTotal = totalOf(sel);
+
+      // Beschriftung der Navigationsleiste
+      let navLabel, navSub;
+      if (view === "tag") {
+        navLabel = `${selDate.getDate()}. ${MO_L[selDate.getMonth()]} ${selDate.getFullYear()}`;
+        navSub = WD[selDate.getDay()];
+      } else if (view === "woche") {
+        const mon = mondayOf(selDate), sun = addDays(mon, 6);
+        navLabel = mon.getMonth() === sun.getMonth()
+          ? `${mon.getDate()}.–${sun.getDate()}. ${MO_L[sun.getMonth()]} ${sun.getFullYear()}`
+          : `${mon.getDate()}. ${MO[mon.getMonth()]} – ${sun.getDate()}. ${MO[sun.getMonth()]} ${sun.getFullYear()}`;
+        navSub = "Woche";
+      } else {
+        navLabel = `${MO_L[selDate.getMonth()]} ${selDate.getFullYear()}`;
+        navSub = "Monat";
+      }
 
       if (data === null) return <div className="loading">Lädt …</div>;
 
@@ -322,56 +513,77 @@
             <div className="sub">Wer besucht Mami wann?</div>
           </div>
 
-          <div className="strip-wrap">
-            <div className="strip" ref={stripRef}>
-              {ALL_DAYS.map(key => {
-                const d = fromKey(key);
-                const wd = d.getDay();
-                const dd = (data && data[key]) || EMPTY_DAY;
-                const cls = ["day"];
-                if (key === sel) cls.push("sel");
-                if (key === todayKey) cls.push("today");
-                if (wd === 0 || wd === 6) cls.push("we");
-                return (
-                  <button key={key} ref={el => dayRefs.current[key] = el}
-                    className={cls.join(" ")} onClick={() => setSel(key)}>
-                    <div className="wd">{WD_S[wd]}</div>
-                    <div className="dn">{d.getDate()}</div>
-                    <div className="mo">{MO[d.getMonth()]}</div>
-                    <div className="dots">
-                      {SLOTS.map(s => (
-                        <span key={s.key}
-                          className={"dot4" + (dd[s.key] && dd[s.key].length ? " f" : "")}></span>
-                      ))}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+          <div className="viewsw">
+            {VIEWS.map(([k, l]) => (
+              <button key={k} className={"vbtn" + (view === k ? " on" : "")}
+                onClick={() => setView(k)}>{l}</button>
+            ))}
           </div>
 
+          {view === "tag" &&
+            <div className="strip-wrap">
+              <div className="strip" ref={stripRef}>
+                {ALL_DAYS.map(key => {
+                  const d = fromKey(key);
+                  const wd = d.getDay();
+                  const dd = (data && data[key]) || EMPTY_DAY;
+                  const cls = ["day"];
+                  if (key === sel) cls.push("sel");
+                  if (key === todayKey) cls.push("today");
+                  if (wd === 0 || wd === 6) cls.push("we");
+                  return (
+                    <button key={key} ref={el => dayRefs.current[key] = el}
+                      className={cls.join(" ")} onClick={() => setSel(key)}>
+                      <div className="wd">{WD_S[wd]}</div>
+                      <div className="dn">{d.getDate()}</div>
+                      <div className="mo">{MO[d.getMonth()]}</div>
+                      <div className="dots">
+                        {SLOTS.map(s => (
+                          <span key={s.key}
+                            className={"dot4" + (dd[s.key] && dd[s.key].length ? " f" : "")}></span>
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>}
+
           <div className="daynav">
-            <button className="arrow" onClick={() => go(-1)} disabled={idx <= 0}>‹</button>
+            <button className="arrow" onClick={() => setSel(prevTarget)}
+              disabled={prevTarget === sel}>‹</button>
             <div className="lbl">
-              <div className="d">{selDate.getDate()}. {MO_L[selDate.getMonth()]} {selDate.getFullYear()}</div>
-              <div className="w">{WD[selDate.getDay()]}</div>
+              <div className="d">{navLabel}</div>
+              <div className="w">{navSub}</div>
             </div>
-            <button className="arrow" onClick={() => go(1)} disabled={idx >= ALL_DAYS.length - 1}>›</button>
+            <button className="arrow" onClick={() => setSel(nextTarget)}
+              disabled={nextTarget === sel}>›</button>
           </div>
           {todayKey && sel !== todayKey &&
             <button className="today-btn" onClick={() => setSel(todayKey)}>Heute</button>}
 
-          <div className="slots">
-            {selTotal === 0 &&
-              <div className="empty-note">⚠️ Für diesen Tag ist noch kein Besuch eingetragen</div>}
-            {SLOTS.map(s => (
-              <Slot key={s.key} dateKey={sel} slot={s} names={selDay[s.key] || []} />
-            ))}
-            <div className="foot">
-              {USE_FB ? "Gemeinsamer Kalender · Änderungen erscheinen live"
-                      : "Vorschau-Modus · Daten nur auf diesem Gerät"}
-            </div>
-          </div>
+          {view === "tag" &&
+            <div className="slots">
+              {selTotal === 0 &&
+                <div className="empty-note">⚠️ Für diesen Tag ist noch kein Besuch eingetragen</div>}
+              {SLOTS.map(s => (
+                <Slot key={s.key} dateKey={sel} slot={s} names={selDay[s.key] || []} />
+              ))}
+              <div className="foot">
+                {USE_FB ? "Gemeinsamer Kalender · Änderungen erscheinen live"
+                        : "Vorschau-Modus · Daten nur auf diesem Gerät"}
+              </div>
+            </div>}
+
+          {view === "woche" && <>
+            <WeekView data={data} sel={sel} onPick={pickDay} />
+            <div className="hint">Tippe auf einen Tag, um ihn zu bearbeiten.</div>
+          </>}
+
+          {view === "monat" && <>
+            <MonthView data={data} sel={sel} onPick={pickDay} />
+            <div className="hint">Rot = noch kein Besuch · Tippe auf einen Tag zum Bearbeiten.</div>
+          </>}
         </div>
       );
     }
