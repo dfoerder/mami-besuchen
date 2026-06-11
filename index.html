@@ -57,11 +57,13 @@
     .day .wd{font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
     .day .dn{font-size:18px;font-weight:700;line-height:1.25;margin-top:1px}
     .day .mo{font-size:9px;color:var(--muted);font-weight:600}
-    .day .ind{width:6px;height:6px;border-radius:50%;margin:4px auto 0;background:var(--line)}
-    .day.has .ind{background:var(--accent)}
+    .day .dots{display:flex;gap:3px;justify-content:center;margin-top:5px}
+    .day .dot4{width:5px;height:5px;border-radius:50%;background:var(--line)}
+    .day .dot4.f{background:var(--accent)}
     .day.sel{background:var(--accent);border-color:var(--accent)}
     .day.sel .wd,.day.sel .dn,.day.sel .mo{color:#fff}
-    .day.sel .ind{background:rgba(255,255,255,.9)}
+    .day.sel .dot4{background:rgba(255,255,255,.35)}
+    .day.sel .dot4.f{background:#fff}
     .day.today:not(.sel){border-color:var(--accent)}
     .day.today .dn{color:var(--accent-dark)}
     .day.today.sel .dn{color:#fff}
@@ -325,18 +327,23 @@
               {ALL_DAYS.map(key => {
                 const d = fromKey(key);
                 const wd = d.getDay();
+                const dd = (data && data[key]) || EMPTY_DAY;
                 const cls = ["day"];
                 if (key === sel) cls.push("sel");
                 if (key === todayKey) cls.push("today");
                 if (wd === 0 || wd === 6) cls.push("we");
-                if (totalOf(key) > 0) cls.push("has");
                 return (
                   <button key={key} ref={el => dayRefs.current[key] = el}
                     className={cls.join(" ")} onClick={() => setSel(key)}>
                     <div className="wd">{WD_S[wd]}</div>
                     <div className="dn">{d.getDate()}</div>
                     <div className="mo">{MO[d.getMonth()]}</div>
-                    <div className="ind"></div>
+                    <div className="dots">
+                      {SLOTS.map(s => (
+                        <span key={s.key}
+                          className={"dot4" + (dd[s.key] && dd[s.key].length ? " f" : "")}></span>
+                      ))}
+                    </div>
                   </button>
                 );
               })}
