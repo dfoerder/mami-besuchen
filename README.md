@@ -18,7 +18,6 @@ Build-frei wie die Bibel-App – einfach Dateien bearbeiten und pushen:
 | `sw.js` | Service Worker (offline-fähig) |
 | `manifest.json` | PWA-Manifest |
 | `icon-192.png`, `icon-512.png` | App-Icons |
-| `.github/workflows/pages.yml` | Auto-Deploy auf GitHub Pages |
 
 ## Vorschau-Modus
 
@@ -87,6 +86,6 @@ Ein- und Austragen nutzt `arrayUnion`/`arrayRemove`, damit gleichzeitige
 
 ## Deployment
 
-Repo `mami-besuchen` auf GitHub anlegen, pushen, dann in den Repo-Einstellungen
-unter **Settings → Pages → Source: GitHub Actions** aktivieren. Jeder Push auf
-`main` deployt automatisch.
+Läuft auf **GitHub Pages** unter https://dfoerder.github.io/mami-besuchen/ —
+Pages ist auf „Deploy from branch" (`main`, Ordner `/`) gesetzt. Jeder Push auf
+`main` aktualisiert die Seite automatisch (ein bis zwei Minuten Verzögerung).
