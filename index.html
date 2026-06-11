@@ -139,9 +139,8 @@
     .weekgrid{padding:8px 12px 26px}
     .wkrow{display:grid;grid-template-columns:44px repeat(4,1fr);gap:4px;margin-bottom:4px}
     .wkhead{position:sticky;top:0;z-index:5;background:var(--bg);padding-top:2px}
-    .wkhead .wkh{text-align:center;padding:2px 0}
-    .wkhead .wkh .i{font-size:16px;line-height:1.3}
-    .wkhead .wkh .l{font-size:9px;color:var(--muted);font-weight:700}
+    .wkhead .wkh{text-align:center;padding:4px 0}
+    .wkhead .wkh .l{font-size:11px;color:var(--muted);font-weight:700}
     .wkday{background:var(--card);border-radius:11px;box-shadow:var(--shadow);
       display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5px 0}
     .wkday:disabled{opacity:.3}
@@ -185,10 +184,10 @@
     ];
     const SIB_NAMES = SIBLINGS.map(s => s.name);
     const SLOTS = [
-      { key: "morgen",     label: "Morgen",     icon: "🌅" },
-      { key: "mittag",     label: "Mittag",     icon: "☀️" },
-      { key: "nachmittag", label: "Nachmittag", icon: "⛅" },
-      { key: "abend",      label: "Abend",      icon: "🌙" },
+      { key: "morgen",     label: "Morgen" },
+      { key: "mittag",     label: "Mittag" },
+      { key: "nachmittag", label: "Nachmittag" },
+      { key: "abend",      label: "Abend" },
     ];
     const WD   = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
     const WD_S = ["So","Mo","Di","Mi","Do","Fr","Sa"];
@@ -315,7 +314,7 @@
               <div></div>
               {SLOTS.map(s => (
                 <div key={s.key} className="wkh">
-                  <div className="i">{s.icon}</div><div className="l">{s.label}</div>
+                  <div className="l">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -411,7 +410,6 @@
       return (
         <div className="slot">
           <div className="slot-h">
-            <span className="ic">{slot.icon}</span>
             <span className="nm">{slot.label}</span>
             <span className={"cnt" + (count ? " on" : "")}>{count}</span>
           </div>
@@ -507,7 +505,7 @@
       return (
         <div>
           <div className="hdr">
-            <h1>👵 Mami besuchen
+            <h1>Mami besuchen
               {!USE_FB && <span className="offline-dot">Vorschau</span>}
             </h1>
             <div className="sub">Wer besucht Mami wann?</div>
