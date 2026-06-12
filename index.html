@@ -166,6 +166,44 @@
     .mcell.today{outline:2px solid var(--accent);outline-offset:-1px}
     .mpeople{display:flex;flex-wrap:wrap;gap:2px;justify-content:flex-start}
     .hint{text-align:center;font-size:12px;color:var(--muted);padding:4px 24px 0}
+
+    /* Bemerkungen / Notizen */
+    .notes{padding:8px 14px 30px}
+    .subhd{font-size:13px;font-weight:700;color:var(--muted);margin:20px 4px 2px}
+    .note-empty{background:var(--bg2);color:var(--muted);font-size:13px;text-align:center;
+      padding:16px;border-radius:14px;margin:11px 4px;font-weight:600}
+    .notebox{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px 15px;margin:11px 0}
+    .notebox .lab{font-size:14px;font-weight:700;margin-bottom:9px}
+    .authsel{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+    .authchip{padding:7px 12px;border-radius:22px;font-size:13.5px;font-weight:600;
+      border:1.5px solid var(--line);background:var(--bg2);color:var(--muted);
+      display:flex;align-items:center;gap:6px;user-select:none}
+    .authchip .dot{width:9px;height:9px;border-radius:50%}
+    .authchip.on{color:#fff;border-color:transparent}
+    .authchip.on .dot{background:rgba(255,255,255,.85)}
+    .nameinput{border:1.5px solid var(--line);background:var(--bg2);border-radius:12px;
+      padding:7px 11px;font-size:13.5px;color:var(--text);font-family:inherit;min-width:120px}
+    .nameinput:focus{outline:none;border-color:var(--accent)}
+    .notearea{width:100%;border:1.5px solid var(--line);background:var(--bg2);border-radius:12px;
+      padding:10px 12px;font-size:14px;font-family:inherit;color:var(--text);resize:vertical;min-height:64px}
+    .notearea:focus{outline:none;border-color:var(--accent)}
+    .noteactions{display:flex;justify-content:flex-end;margin-top:9px}
+    .notesubmit{background:var(--accent);color:#fff;border-radius:12px;padding:9px 18px;font-size:14px;font-weight:700}
+    .notesubmit:disabled{opacity:.4}
+
+    .rcard{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px 14px;margin:10px 0}
+    .rhead{display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-wrap:wrap}
+    .rauthor{font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px}
+    .rday{font-size:11.5px;color:var(--accent-dark);font-weight:700;background:var(--accent-bg);padding:2px 9px;border-radius:11px}
+    .rtime{margin-left:auto;font-size:11.5px;color:var(--muted);white-space:nowrap}
+    .rtext{font-size:14.5px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+    .rcomments{margin-top:10px;border-left:2px solid var(--line);padding-left:11px;display:flex;flex-direction:column;gap:9px}
+    .chead{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+    .cauthor{font-weight:700;font-size:12.5px}
+    .ctime{margin-left:auto;color:var(--muted);font-size:10.5px;white-space:nowrap}
+    .ctext{font-size:13.5px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
+    .replybtn{margin-top:9px;font-size:12.5px;font-weight:700;color:var(--accent-dark);
+      background:var(--accent-bg);padding:6px 13px;border-radius:20px}
   </style>
 </head>
 <body>
@@ -219,6 +257,21 @@
     const mondayOf  = d => { const x = new Date(d); x.setDate(x.getDate() - ((x.getDay()+6)%7)); x.setHours(0,0,0,0); return x; };
     const clampKey  = d => { if (d < START) return toKey(START); if (d > END) return toKey(END); return toKey(d); };
 
+    // Zeitstempel-Formatierung für Bemerkungen
+    const fmtDateTime = ms => {
+      const d = new Date(ms);
+      return `${d.getDate()}. ${MO[d.getMonth()]} ${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+    const fmtDay = key => {
+      const d = fromKey(key);
+      return `${WD_S[d.getDay()]}, ${d.getDate()}. ${MO[d.getMonth()]}`;
+    };
+
+    // Zuletzt gewählter Autor wird lokal gemerkt
+    const AUTHOR_KEY = "mami-besuchen-autor";
+    const getAuthor = () => { try { return localStorage.getItem(AUTHOR_KEY) || ""; } catch { return ""; } };
+    const setAuthorLS = a => { try { localStorage.setItem(AUTHOR_KEY, a); } catch {} };
+
     // ── Speicher-Schicht (Firebase oder lokaler Vorschaumodus) ──
     const cfg = window.FIREBASE_CONFIG || {};
     const USE_FB = cfg.apiKey && !String(cfg.apiKey).includes("DEIN_");
@@ -234,6 +287,7 @@
       } catch (e) { console.error("Firebase-Init fehlgeschlagen:", e); }
     }
     const LS_KEY = "mami-besuchen";
+    const NOTES_KEY = "mami-besuchen-notes";
 
     // Schreibfehler sichtbar machen (sonst scheitert ein Eintrag stumm)
     const reportWriteError = e => {
@@ -286,6 +340,52 @@
           all[dateKey] = day;
           localStorage.setItem(LS_KEY, JSON.stringify(all));
           window._localRefresh && window._localRefresh();
+        }
+      },
+
+      // ── Bemerkungen (separate Sammlung "bemerkungen") ──────────
+      subscribeNotes(cb) {
+        if (fbDb) {
+          return fbDb.collection("bemerkungen").onSnapshot(snap => {
+            const arr = [];
+            snap.forEach(doc => arr.push({ id: doc.id, ...doc.data() }));
+            cb(arr);
+          }, err => console.error("Firestore-Notizen-Fehler:", err));
+        }
+        const read = () => { try { return JSON.parse(localStorage.getItem(NOTES_KEY)) || []; } catch { return []; } };
+        cb(read());
+        const h = e => { if (e.key === NOTES_KEY) cb(read()); };
+        window.addEventListener("storage", h);
+        window._notesRefresh = () => cb(read());
+        return () => window.removeEventListener("storage", h);
+      },
+      addNote(datum, autor, text) {
+        const note = { datum, autor, text, ms: Date.now(), kommentare: [] };
+        if (fbDb) {
+          fbDb.collection("bemerkungen").add(note).catch(reportWriteError);
+        } else {
+          const all = (() => { try { return JSON.parse(localStorage.getItem(NOTES_KEY)) || []; } catch { return []; } })();
+          note.id = "n" + note.ms + Math.random().toString(36).slice(2, 7);
+          all.push(note);
+          localStorage.setItem(NOTES_KEY, JSON.stringify(all));
+          window._notesRefresh && window._notesRefresh();
+        }
+      },
+      addComment(noteId, autor, text) {
+        const c = { autor, text, ms: Date.now() };
+        if (fbDb) {
+          fbDb.collection("bemerkungen").doc(noteId).set(
+            { kommentare: firebase.firestore.FieldValue.arrayUnion(c) }, { merge: true })
+            .catch(reportWriteError);
+        } else {
+          const all = (() => { try { return JSON.parse(localStorage.getItem(NOTES_KEY)) || []; } catch { return []; } })();
+          const n = all.find(x => x.id === noteId);
+          if (n) {
+            n.kommentare = n.kommentare || [];
+            n.kommentare.push(c);
+            localStorage.setItem(NOTES_KEY, JSON.stringify(all));
+            window._notesRefresh && window._notesRefresh();
+          }
         }
       },
     };
@@ -407,6 +507,102 @@
       );
     }
 
+    // Auswahl, wer schreibt (5 Geschwister + freier Name); merkt sich die Wahl
+    function AuthorSelect({ value, onChange }) {
+      const [otherOn, setOtherOn] = useState(!!value && !SIB_NAMES.includes(value));
+      return (
+        <div className="authsel">
+          {SIBLINGS.map(s => (
+            <button key={s.name} className={"authchip" + (value === s.name ? " on" : "")}
+              style={value === s.name ? { background: s.color } : null}
+              onClick={() => { setOtherOn(false); onChange(s.name); }}>
+              <span className="dot" style={value !== s.name ? { background: s.color } : null}></span>
+              {s.name}
+            </button>
+          ))}
+          <button className={"authchip" + (otherOn ? " on" : "")}
+            style={otherOn ? { background: EXTRA_COLOR } : null}
+            onClick={() => { setOtherOn(true); onChange(""); }}>Andere</button>
+          {otherOn &&
+            <input className="nameinput" placeholder="Dein Name" autoFocus
+              value={SIB_NAMES.includes(value) ? "" : value}
+              onChange={e => onChange(e.target.value)} />}
+        </div>
+      );
+    }
+
+    function NoteComposer({ label, btnLabel, placeholder, onSubmit }) {
+      const [autor, setAutor] = useState(getAuthor());
+      const [text, setText] = useState("");
+      const ok = autor.trim() && text.trim();
+      const submit = () => {
+        if (!ok) return;
+        const a = autor.trim();
+        setAuthorLS(a);
+        onSubmit(a, text.trim());
+        setText("");
+      };
+      return (
+        <div className="notebox">
+          {label && <div className="lab">{label}</div>}
+          <AuthorSelect value={autor} onChange={setAutor} />
+          <textarea className="notearea" placeholder={placeholder} value={text}
+            onChange={e => setText(e.target.value)} />
+          <div className="noteactions">
+            <button className="notesubmit" disabled={!ok} onClick={submit}>{btnLabel}</button>
+          </div>
+        </div>
+      );
+    }
+
+    function RemarkCard({ note, showDay, onComment }) {
+      const [replying, setReplying] = useState(false);
+      const comments = (note.kommentare || []).slice().sort((a, b) => a.ms - b.ms);
+      return (
+        <div className="rcard">
+          <div className="rhead">
+            <span className="rauthor">
+              <span className="pdot" style={{ background: colorOf(note.autor) || EXTRA_COLOR }}>
+                {initialOf(note.autor)}</span>
+              {note.autor}
+            </span>
+            {showDay && <span className="rday">{fmtDay(note.datum)}</span>}
+            <span className="rtime">{fmtDateTime(note.ms)}</span>
+          </div>
+          <div className="rtext">{note.text}</div>
+          {comments.length > 0 &&
+            <div className="rcomments">
+              {comments.map((c, i) => (
+                <div key={i}>
+                  <div className="chead">
+                    <span className="pdot" style={{ width: 15, height: 15, fontSize: 9,
+                      background: colorOf(c.autor) || EXTRA_COLOR }}>{initialOf(c.autor)}</span>
+                    <span className="cauthor">{c.autor}</span>
+                    <span className="ctime">{fmtDateTime(c.ms)}</span>
+                  </div>
+                  <div className="ctext">{c.text}</div>
+                </div>
+              ))}
+            </div>}
+          {replying
+            ? <NoteComposer btnLabel="Kommentar speichern" placeholder="Ergänzung / Kommentar …"
+                onSubmit={(a, t) => { onComment(note.id, a, t); setReplying(false); }} />
+            : <button className="replybtn" onClick={() => setReplying(true)}>+ Kommentieren</button>}
+        </div>
+      );
+    }
+
+    function NotesView({ notes, onComment }) {
+      const sorted = notes.slice().sort((a, b) => b.ms - a.ms);
+      return (
+        <div className="notes">
+          {sorted.length === 0
+            ? <div className="note-empty">Noch keine Bemerkungen vorhanden.</div>
+            : sorted.map(n => <RemarkCard key={n.id} note={n} showDay={true} onComment={onComment} />)}
+        </div>
+      );
+    }
+
     function Slot({ dateKey, slot, names }) {
       const [txt, setTxt] = useState("");
       const extras = names.filter(n => !SIB_NAMES.includes(n));
@@ -461,16 +657,18 @@
       );
     }
 
-    const VIEWS = [["tag","Tag"],["woche","Woche"],["monat","Monat"]];
+    const VIEWS = [["tag","Tag"],["woche","Woche"],["monat","Monat"],["notizen","Notizen"]];
 
     function App() {
       const [data, setData] = useState(null);
+      const [notes, setNotes] = useState([]);
       const [sel, setSel] = useState(todayKey || ALL_DAYS[0]);
       const [view, setView] = useState("tag");
       const stripRef = useRef(null);
       const dayRefs = useRef({});
 
       useEffect(() => Store.subscribe(setData), []);
+      useEffect(() => Store.subscribeNotes(setNotes), []);
 
       // ausgewählten Tag im Streifen sichtbar machen (nur Tagesansicht)
       useEffect(() => {
@@ -499,6 +697,7 @@
       const selDate = fromKey(sel);
       const selDay = (data && data[sel]) || EMPTY_DAY;
       const selTotal = totalOf(sel);
+      const dayNotes = notes.filter(n => n.datum === sel).sort((a, b) => b.ms - a.ms);
 
       // Beschriftung der Navigationsleiste
       let navLabel, navSub;
@@ -563,18 +762,20 @@
               </div>
             </div>}
 
-          <div className="daynav">
-            <button className="arrow" onClick={() => setSel(prevTarget)}
-              disabled={prevTarget === sel}>‹</button>
-            <div className="lbl">
-              <div className="d">{navLabel}</div>
-              <div className="w">{navSub}</div>
+          {view !== "notizen" && <>
+            <div className="daynav">
+              <button className="arrow" onClick={() => setSel(prevTarget)}
+                disabled={prevTarget === sel}>‹</button>
+              <div className="lbl">
+                <div className="d">{navLabel}</div>
+                <div className="w">{navSub}</div>
+              </div>
+              <button className="arrow" onClick={() => setSel(nextTarget)}
+                disabled={nextTarget === sel}>›</button>
             </div>
-            <button className="arrow" onClick={() => setSel(nextTarget)}
-              disabled={nextTarget === sel}>›</button>
-          </div>
-          {todayKey && sel !== todayKey &&
-            <button className="today-btn" onClick={() => setSel(todayKey)}>Heute</button>}
+            {todayKey && sel !== todayKey &&
+              <button className="today-btn" onClick={() => setSel(todayKey)}>Heute</button>}
+          </>}
 
           {view === "tag" &&
             <div className="slots">
@@ -583,6 +784,16 @@
               {SLOTS.map(s => (
                 <Slot key={s.key} dateKey={sel} slot={s} names={selDay[s.key] || []} />
               ))}
+
+              <NoteComposer label="Neue Bemerkung" btnLabel="Speichern"
+                placeholder="Wie war der Besuch? …"
+                onSubmit={(a, t) => Store.addNote(sel, a, t)} />
+              {dayNotes.length > 0 && <div className="subhd">Bemerkungen zu diesem Tag</div>}
+              {dayNotes.map(n => (
+                <RemarkCard key={n.id} note={n} showDay={false}
+                  onComment={(id, a, t) => Store.addComment(id, a, t)} />
+              ))}
+
               <div className="foot">
                 {USE_FB ? "Gemeinsamer Kalender · Änderungen erscheinen live"
                         : "Vorschau-Modus · Daten nur auf diesem Gerät"}
@@ -598,6 +809,9 @@
             <MonthView data={data} sel={sel} onPick={pickDay} />
             <div className="hint">Rot = noch kein Besuch · Tippe auf einen Tag zum Bearbeiten.</div>
           </>}
+
+          {view === "notizen" &&
+            <NotesView notes={notes} onComment={(id, a, t) => Store.addComment(id, a, t)} />}
         </div>
       );
     }

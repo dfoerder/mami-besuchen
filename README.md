@@ -61,6 +61,13 @@ service cloud.firestore {
                    && request.resource.data.keys().hasOnly(
                         ['morgen','mittag','nachmittag','abend']);
     }
+    match /bemerkungen/{id} {
+      allow read: if true;
+      allow create, update: if request.resource.data.keys().hasOnly(
+                                 ['datum','autor','text','ms','kommentare'])
+                            && request.resource.data.text is string
+                            && request.resource.data.text.size() < 5000;
+    }
   }
 }
 ```
@@ -83,6 +90,25 @@ Sammlung `tage`, ein Dokument pro Tag (ID = `YYYY-MM-DD`):
 
 Ein- und Austragen nutzt `arrayUnion`/`arrayRemove`, damit gleichzeitige
 Änderungen mehrerer Geschwister sich nicht gegenseitig überschreiben.
+
+### Bemerkungen
+
+Sammlung `bemerkungen`, ein Dokument pro Bemerkung (automatische ID):
+
+```json
+{
+  "datum": "2026-06-12",
+  "autor": "Daniel",
+  "text": "Mami war heute gut gelaunt.",
+  "ms": 1749724800000,
+  "kommentare": [
+    { "autor": "Barbara", "text": "Schön! Ich komme morgen.", "ms": 1749728400000 }
+  ]
+}
+```
+
+`ms` ist der Erstellungszeitpunkt (für „neueste zuerst"). Kommentare werden per
+`arrayUnion` angehängt. Der Kalender (`tage`) bleibt davon unberührt.
 
 ## Deployment
 
