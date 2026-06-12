@@ -224,10 +224,24 @@
     const USE_FB = cfg.apiKey && !String(cfg.apiKey).includes("DEIN_");
     let fbDb = null;
     if (USE_FB) {
-      try { firebase.initializeApp(cfg); fbDb = firebase.firestore(); }
-      catch (e) { console.error("Firebase-Init fehlgeschlagen:", e); }
+      try {
+        firebase.initializeApp(cfg);
+        fbDb = firebase.firestore();
+        // Verbindungsart automatisch erkennen (Long-Polling statt WebChannel),
+        // hilft in Netzen/Geräten, wo die Standard-Verbindung blockiert wird
+        // (häufig auf Android, hinter Firewalls, VPN oder Werbeblockern).
+        try { fbDb.settings({ experimentalAutoDetectLongPolling: true }); } catch (e) {}
+      } catch (e) { console.error("Firebase-Init fehlgeschlagen:", e); }
     }
     const LS_KEY = "mami-besuchen";
+
+    // Schreibfehler sichtbar machen (sonst scheitert ein Eintrag stumm)
+    const reportWriteError = e => {
+      console.error("Schreibfehler:", e);
+      const reason = (e && (e.code || e.message)) || String(e);
+      alert("Eintrag konnte nicht gespeichert werden.\n\n" + reason +
+            "\n\nBitte Internetverbindung prüfen und Seite neu laden.");
+    };
 
     const Store = {
       subscribe(cb) {
@@ -249,7 +263,8 @@
       add(dateKey, slot, name) {
         if (fbDb) {
           fbDb.collection("tage").doc(dateKey).set(
-            { [slot]: firebase.firestore.FieldValue.arrayUnion(name) }, { merge: true });
+            { [slot]: firebase.firestore.FieldValue.arrayUnion(name) }, { merge: true })
+            .catch(reportWriteError);
         } else {
           const all = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; } })();
           const day = { ...EMPTY_DAY, ...all[dateKey] };
@@ -262,7 +277,8 @@
       remove(dateKey, slot, name) {
         if (fbDb) {
           fbDb.collection("tage").doc(dateKey).set(
-            { [slot]: firebase.firestore.FieldValue.arrayRemove(name) }, { merge: true });
+            { [slot]: firebase.firestore.FieldValue.arrayRemove(name) }, { merge: true })
+            .catch(reportWriteError);
         } else {
           const all = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; } })();
           const day = { ...EMPTY_DAY, ...all[dateKey] };
