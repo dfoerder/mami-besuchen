@@ -64,7 +64,7 @@ service cloud.firestore {
     match /bemerkungen/{id} {
       allow read: if true;
       allow create, update: if request.resource.data.keys().hasOnly(
-                                 ['datum','autor','text','ms','kommentare'])
+                                 ['datum','zeit','autor','text','ms','kommentare'])
                             && request.resource.data.text is string
                             && request.resource.data.text.size() < 5000;
       allow delete: if true;
@@ -99,6 +99,7 @@ Sammlung `bemerkungen`, ein Dokument pro Bemerkung (automatische ID):
 ```json
 {
   "datum": "2026-06-12",
+  "zeit": "nachmittag",
   "autor": "Daniel",
   "text": "Mami war heute gut gelaunt.",
   "ms": 1749724800000,
@@ -108,6 +109,7 @@ Sammlung `bemerkungen`, ein Dokument pro Bemerkung (automatische ID):
 }
 ```
 
+`zeit` ist eine der vier Besuchszeiten (`morgen`/`mittag`/`nachmittag`/`abend`).
 `ms` ist der Erstellungszeitpunkt (für „neueste zuerst"). Kommentare werden per
 `arrayUnion` angehängt. Der Kalender (`tage`) bleibt davon unberührt.
 

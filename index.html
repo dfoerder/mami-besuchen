@@ -206,6 +206,14 @@
       background:var(--accent-bg);padding:6px 13px;border-radius:20px}
     .ndel{font-size:18px;line-height:1;color:var(--muted);opacity:.55;padding:0 2px 0 6px}
     .cdel{font-size:14px;line-height:1;color:var(--muted);opacity:.5;padding:0 1px 0 4px}
+    .rslot{font-size:11.5px;color:#6a4f87;font-weight:700;background:#efe9f3;padding:2px 9px;border-radius:11px}
+
+    /* Bemerkungen innerhalb einer Zeit-Karte */
+    .slot-notes{margin-top:13px;padding-top:12px;border-top:1px dashed var(--line)}
+    .slot-notes .rcard{box-shadow:none;background:var(--bg2);margin:8px 0;padding:11px 12px}
+    .slot-notes .notebox{box-shadow:none;background:var(--bg2);margin:8px 0 0}
+    .addnote-btn{font-size:12.5px;font-weight:700;color:var(--accent-dark);
+      background:var(--accent-bg);padding:7px 14px;border-radius:20px}
   </style>
 </head>
 <body>
@@ -229,6 +237,7 @@
       { key: "nachmittag", label: "Nachmittag" },
       { key: "abend",      label: "Abend" },
     ];
+    const SLOT_LABEL = Object.fromEntries(SLOTS.map(s => [s.key, s.label]));
     const WD   = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
     const WD_S = ["So","Mo","Di","Mi","Do","Fr","Sa"];
     const MO   = ["Jan","Feb","März","Apr","Mai","Juni","Juli","Aug","Sep","Okt","Nov","Dez"];
@@ -361,8 +370,8 @@
         window._notesRefresh = () => cb(read());
         return () => window.removeEventListener("storage", h);
       },
-      addNote(datum, autor, text) {
-        const note = { datum, autor, text, ms: Date.now(), kommentare: [] };
+      addNote(datum, zeit, autor, text) {
+        const note = { datum, zeit, autor, text, ms: Date.now(), kommentare: [] };
         if (fbDb) {
           fbDb.collection("bemerkungen").add(note).catch(reportWriteError);
         } else {
@@ -594,6 +603,7 @@
               {note.autor}
             </span>
             {showDay && <span className="rday">{fmtDay(note.datum)}</span>}
+            {showDay && note.zeit && <span className="rslot">{SLOT_LABEL[note.zeit] || note.zeit}</span>}
             <span className="rtime">{fmtDateTime(note.ms)}</span>
             <button className="ndel" title="Bemerkung löschen"
               onClick={() => { if (confirm("Diese Bemerkung wirklich löschen?")) onDeleteNote(note.id); }}>×</button>
@@ -637,10 +647,12 @@
       );
     }
 
-    function Slot({ dateKey, slot, names }) {
+    function Slot({ dateKey, slot, names, notes }) {
       const [txt, setTxt] = useState("");
+      const [noteOpen, setNoteOpen] = useState(false);
       const extras = names.filter(n => !SIB_NAMES.includes(n));
       const count = names.length;
+      const slotNotes = (notes || []).slice().sort((a, b) => b.ms - a.ms);
 
       const toggleSib = name => {
         if (names.includes(name)) Store.remove(dateKey, slot.key, name);
@@ -686,6 +698,19 @@
               onChange={e => setTxt(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") addExtra(); }} />
             <button onClick={addExtra} disabled={!txt.trim()}>＋</button>
+          </div>
+
+          <div className="slot-notes">
+            {slotNotes.map(n => (
+              <RemarkCard key={n.id} note={n} showDay={false}
+                onComment={(id, a, t) => Store.addComment(id, a, t)}
+                onDeleteNote={id => Store.deleteNote(id)}
+                onDeleteComment={(id, c) => Store.removeComment(id, c)} />
+            ))}
+            {noteOpen
+              ? <NoteComposer btnLabel="Speichern" placeholder={"Bemerkung zu " + slot.label + " …"}
+                  onSubmit={(a, t) => { Store.addNote(dateKey, slot.key, a, t); setNoteOpen(false); }} />
+              : <button className="addnote-btn" onClick={() => setNoteOpen(true)}>＋ Bemerkung</button>}
           </div>
         </div>
       );
@@ -816,18 +841,8 @@
               {selTotal === 0 &&
                 <div className="empty-note">⚠️ Für diesen Tag ist noch kein Besuch eingetragen</div>}
               {SLOTS.map(s => (
-                <Slot key={s.key} dateKey={sel} slot={s} names={selDay[s.key] || []} />
-              ))}
-
-              <NoteComposer label="Neue Bemerkung" btnLabel="Speichern"
-                placeholder="Wie war der Besuch? …"
-                onSubmit={(a, t) => Store.addNote(sel, a, t)} />
-              {dayNotes.length > 0 && <div className="subhd">Bemerkungen zu diesem Tag</div>}
-              {dayNotes.map(n => (
-                <RemarkCard key={n.id} note={n} showDay={false}
-                  onComment={(id, a, t) => Store.addComment(id, a, t)}
-                  onDeleteNote={id => Store.deleteNote(id)}
-                  onDeleteComment={(id, c) => Store.removeComment(id, c)} />
+                <Slot key={s.key} dateKey={sel} slot={s} names={selDay[s.key] || []}
+                  notes={dayNotes.filter(n => n.zeit === s.key)} />
               ))}
 
               <div className="foot">
