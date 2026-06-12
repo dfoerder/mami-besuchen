@@ -67,6 +67,7 @@ service cloud.firestore {
                                  ['datum','autor','text','ms','kommentare'])
                             && request.resource.data.text is string
                             && request.resource.data.text.size() < 5000;
+      allow delete: if true;
     }
   }
 }

@@ -204,6 +204,8 @@
     .ctext{font-size:13.5px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
     .replybtn{margin-top:9px;font-size:12.5px;font-weight:700;color:var(--accent-dark);
       background:var(--accent-bg);padding:6px 13px;border-radius:20px}
+    .ndel{font-size:18px;line-height:1;color:var(--muted);opacity:.55;padding:0 2px 0 6px}
+    .cdel{font-size:14px;line-height:1;color:var(--muted);opacity:.5;padding:0 1px 0 4px}
   </style>
 </head>
 <body>
@@ -388,6 +390,31 @@
           }
         }
       },
+      deleteNote(noteId) {
+        if (fbDb) {
+          fbDb.collection("bemerkungen").doc(noteId).delete().catch(reportWriteError);
+        } else {
+          const all = (() => { try { return JSON.parse(localStorage.getItem(NOTES_KEY)) || []; } catch { return []; } })();
+          localStorage.setItem(NOTES_KEY, JSON.stringify(all.filter(x => x.id !== noteId)));
+          window._notesRefresh && window._notesRefresh();
+        }
+      },
+      removeComment(noteId, comment) {
+        if (fbDb) {
+          fbDb.collection("bemerkungen").doc(noteId).set(
+            { kommentare: firebase.firestore.FieldValue.arrayRemove(comment) }, { merge: true })
+            .catch(reportWriteError);
+        } else {
+          const all = (() => { try { return JSON.parse(localStorage.getItem(NOTES_KEY)) || []; } catch { return []; } })();
+          const n = all.find(x => x.id === noteId);
+          if (n && n.kommentare) {
+            n.kommentare = n.kommentare.filter(c =>
+              !(c.autor === comment.autor && c.text === comment.text && c.ms === comment.ms));
+            localStorage.setItem(NOTES_KEY, JSON.stringify(all));
+            window._notesRefresh && window._notesRefresh();
+          }
+        }
+      },
     };
 
     // ── UI-Komponenten ───────────────────────────────────────
@@ -555,7 +582,7 @@
       );
     }
 
-    function RemarkCard({ note, showDay, onComment }) {
+    function RemarkCard({ note, showDay, onComment, onDeleteNote, onDeleteComment }) {
       const [replying, setReplying] = useState(false);
       const comments = (note.kommentare || []).slice().sort((a, b) => a.ms - b.ms);
       return (
@@ -568,6 +595,8 @@
             </span>
             {showDay && <span className="rday">{fmtDay(note.datum)}</span>}
             <span className="rtime">{fmtDateTime(note.ms)}</span>
+            <button className="ndel" title="Bemerkung löschen"
+              onClick={() => { if (confirm("Diese Bemerkung wirklich löschen?")) onDeleteNote(note.id); }}>×</button>
           </div>
           <div className="rtext">{note.text}</div>
           {comments.length > 0 &&
@@ -579,6 +608,8 @@
                       background: colorOf(c.autor) || EXTRA_COLOR }}>{initialOf(c.autor)}</span>
                     <span className="cauthor">{c.autor}</span>
                     <span className="ctime">{fmtDateTime(c.ms)}</span>
+                    <button className="cdel" title="Kommentar löschen"
+                      onClick={() => { if (confirm("Diesen Kommentar löschen?")) onDeleteComment(note.id, c); }}>×</button>
                   </div>
                   <div className="ctext">{c.text}</div>
                 </div>
@@ -592,13 +623,16 @@
       );
     }
 
-    function NotesView({ notes, onComment }) {
+    function NotesView({ notes, onComment, onDeleteNote, onDeleteComment }) {
       const sorted = notes.slice().sort((a, b) => b.ms - a.ms);
       return (
         <div className="notes">
           {sorted.length === 0
             ? <div className="note-empty">Noch keine Bemerkungen vorhanden.</div>
-            : sorted.map(n => <RemarkCard key={n.id} note={n} showDay={true} onComment={onComment} />)}
+            : sorted.map(n => (
+                <RemarkCard key={n.id} note={n} showDay={true} onComment={onComment}
+                  onDeleteNote={onDeleteNote} onDeleteComment={onDeleteComment} />
+              ))}
         </div>
       );
     }
@@ -791,7 +825,9 @@
               {dayNotes.length > 0 && <div className="subhd">Bemerkungen zu diesem Tag</div>}
               {dayNotes.map(n => (
                 <RemarkCard key={n.id} note={n} showDay={false}
-                  onComment={(id, a, t) => Store.addComment(id, a, t)} />
+                  onComment={(id, a, t) => Store.addComment(id, a, t)}
+                  onDeleteNote={id => Store.deleteNote(id)}
+                  onDeleteComment={(id, c) => Store.removeComment(id, c)} />
               ))}
 
               <div className="foot">
@@ -811,7 +847,9 @@
           </>}
 
           {view === "notizen" &&
-            <NotesView notes={notes} onComment={(id, a, t) => Store.addComment(id, a, t)} />}
+            <NotesView notes={notes} onComment={(id, a, t) => Store.addComment(id, a, t)}
+              onDeleteNote={id => Store.deleteNote(id)}
+              onDeleteComment={(id, c) => Store.removeComment(id, c)} />}
         </div>
       );
     }
