@@ -45,7 +45,7 @@
       box-shadow:0 2px 12px rgba(90,122,58,.25)}
     .hdr h1{font-size:20px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
     .hdr .sub{font-size:12.5px;opacity:.85;margin-top:2px}
-    .offline-dot{font-size:11px;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:20px;margin-left:auto;font-weight:600}
+    .offline-dot{font-size:11px;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:20px;margin-left:8px;font-weight:600}
 
     /* Tagesstreifen */
     .strip-wrap{position:sticky;top:0;z-index:10;background:var(--bg2);border-bottom:1px solid var(--line)}
@@ -214,6 +214,27 @@
     .slot-notes .notebox{box-shadow:none;background:var(--bg2);margin:8px 0 0}
     .addnote-btn{font-size:12.5px;font-weight:700;color:var(--accent-dark);
       background:var(--accent-bg);padding:7px 14px;border-radius:20px}
+
+    /* Hilfe-Knopf + Fenster */
+    .help-btn{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:16px;
+      width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.22);color:#fff;
+      font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center}
+    .modal-bg{position:fixed;inset:0;background:rgba(40,36,22,.5);z-index:50;
+      display:flex;align-items:flex-end;justify-content:center}
+    .modal{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:560px;
+      padding:18px 20px calc(env(safe-area-inset-bottom) + 26px);max-height:88vh;overflow-y:auto;
+      box-shadow:0 -4px 30px rgba(0,0,0,.25)}
+    .modal-h{display:flex;align-items:center;margin-bottom:5px}
+    .modal-t{font-size:18px;font-weight:700}
+    .modal-x{margin-left:auto;font-size:26px;line-height:1;color:var(--muted);padding:0 4px}
+    .modal-sub{font-size:13.5px;color:var(--muted);line-height:1.4}
+    .platsw{display:flex;gap:8px;margin:14px 0 16px}
+    .pbtn{flex:1;padding:9px 0;border-radius:11px;font-size:14px;font-weight:700;
+      color:var(--muted);background:var(--card);box-shadow:var(--shadow)}
+    .pbtn.on{background:var(--accent);color:#fff}
+    .steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px}
+    .steps li{font-size:14.5px;line-height:1.45;color:var(--text)}
+    .modal-note{font-size:12.5px;color:var(--muted);margin-top:16px;line-height:1.45}
   </style>
 </head>
 <body>
@@ -276,6 +297,15 @@
     const fmtDay = key => {
       const d = fromKey(key);
       return `${WD_S[d.getDay()]}, ${d.getDate()}. ${MO[d.getMonth()]}`;
+    };
+
+    // Betriebssystem erkennen (für die Installations-Hilfe)
+    const detectPlatform = () => {
+      const ua = navigator.userAgent || "";
+      if (/android/i.test(ua)) return "android";
+      if (/iphone|ipad|ipod/i.test(ua) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) return "ios";
+      return "other";
     };
 
     // Zuletzt gewählter Autor wird lokal gemerkt
@@ -716,6 +746,46 @@
       );
     }
 
+    function HelpModal({ onClose }) {
+      const detected = detectPlatform();
+      const [plat, setPlat] = useState(detected === "other" ? "ios" : detected);
+      return (
+        <div className="modal-bg" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-h">
+              <span className="modal-t">App installieren</span>
+              <button className="modal-x" onClick={onClose} aria-label="Schließen">×</button>
+            </div>
+            <p className="modal-sub">So legst du „Mami besuchen" als App auf den Startbildschirm:</p>
+            <div className="platsw">
+              <button className={"pbtn" + (plat === "ios" ? " on" : "")}
+                onClick={() => setPlat("ios")}>iPhone / iPad</button>
+              <button className={"pbtn" + (plat === "android" ? " on" : "")}
+                onClick={() => setPlat("android")}>Android</button>
+            </div>
+            {plat === "ios"
+              ? <ol className="steps">
+                  <li>Diese Seite in <b>Safari</b> öffnen.</li>
+                  <li>Unten auf das <b>Teilen-Symbol</b> tippen (Quadrat mit Pfeil&nbsp;↑).</li>
+                  <li>Etwas nach unten scrollen und <b>„Zum Home-Bildschirm"</b> wählen.</li>
+                  <li>Oben rechts auf <b>„Hinzufügen"</b> tippen.</li>
+                </ol>
+              : <ol className="steps">
+                  <li>Diese Seite in <b>Chrome</b> öffnen.</li>
+                  <li>Oben rechts auf das <b>Menü&nbsp;⋮</b> tippen.</li>
+                  <li><b>„App installieren"</b> bzw. <b>„Zum Startbildschirm hinzufügen"</b> wählen.</li>
+                  <li>Mit <b>„Hinzufügen"</b> / <b>„Installieren"</b> bestätigen.</li>
+                </ol>}
+            <p className="modal-note">
+              {detected === "other"
+                ? "Tipp: Öffne diese Seite auf deinem Handy – dort klappt die Installation."
+                : "Dein Gerät wurde automatisch erkannt. Oben kannst du bei Bedarf umschalten."}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     const VIEWS = [["tag","Tag"],["woche","Woche"],["monat","Monat"],["notizen","Notizen"]];
 
     function App() {
@@ -723,6 +793,7 @@
       const [notes, setNotes] = useState([]);
       const [sel, setSel] = useState(todayKey || ALL_DAYS[0]);
       const [view, setView] = useState("tag");
+      const [helpOpen, setHelpOpen] = useState(false);
       const stripRef = useRef(null);
       const dayRefs = useRef({});
 
@@ -779,11 +850,14 @@
       return (
         <div>
           <div className="hdr">
+            <button className="help-btn" onClick={() => setHelpOpen(true)}
+              aria-label="Hilfe: App installieren">?</button>
             <h1>Mami besuchen
               {!USE_FB && <span className="offline-dot">Vorschau</span>}
             </h1>
             <div className="sub">Wer besucht Mami wann?</div>
           </div>
+          {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
 
           <div className="viewsw">
             {VIEWS.map(([k, l]) => (
