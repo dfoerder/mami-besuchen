@@ -235,6 +235,8 @@
     .steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px}
     .steps li{font-size:14.5px;line-height:1.45;color:var(--text)}
     .modal-note{font-size:12.5px;color:var(--muted);margin-top:16px;line-height:1.45}
+    .modal-warn{background:var(--warn-bg);color:var(--warn);font-size:13px;line-height:1.45;
+      padding:11px 13px;border-radius:12px;margin-bottom:14px;font-weight:600}
   </style>
 </head>
 <body>
@@ -747,8 +749,19 @@
     }
 
     function HelpModal({ onClose }) {
+      const ua = navigator.userAgent || "";
       const detected = detectPlatform();
+      const isStandalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)
+        || window.navigator.standalone === true;
+      const knownInApp = /(WhatsApp|FBAN|FBAV|FB_IAB|Instagram|Line\/|Snapchat|Telegram)/i.test(ua);
       const [plat, setPlat] = useState(detected === "other" ? "ios" : detected);
+
+      // Erkennen, ob die Seite (z. B. aus WhatsApp) in einem Browser läuft,
+      // in dem das Ablegen nicht geht → dann zuerst im richtigen Browser öffnen.
+      const needSafari = plat === "ios" &&
+        (/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua) || knownInApp || !/Safari/i.test(ua));
+      const needChrome = plat === "android" && (/;\s*wv\)/i.test(ua) || knownInApp);
+
       return (
         <div className="modal-bg" onClick={onClose}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -756,31 +769,52 @@
               <span className="modal-t">App installieren</span>
               <button className="modal-x" onClick={onClose} aria-label="Schließen">×</button>
             </div>
-            <p className="modal-sub">So legst du „Mami besuchen" als App auf den Startbildschirm:</p>
-            <div className="platsw">
-              <button className={"pbtn" + (plat === "ios" ? " on" : "")}
-                onClick={() => setPlat("ios")}>iPhone / iPad</button>
-              <button className={"pbtn" + (plat === "android" ? " on" : "")}
-                onClick={() => setPlat("android")}>Android</button>
-            </div>
-            {plat === "ios"
-              ? <ol className="steps">
-                  <li>Diese Seite in <b>Safari</b> öffnen.</li>
-                  <li>Unten auf das <b>Teilen-Symbol</b> tippen (Quadrat mit Pfeil&nbsp;↑).</li>
-                  <li>Etwas nach unten scrollen und <b>„Zum Home-Bildschirm"</b> wählen.</li>
-                  <li>Oben rechts auf <b>„Hinzufügen"</b> tippen.</li>
-                </ol>
-              : <ol className="steps">
-                  <li>Diese Seite in <b>Chrome</b> öffnen.</li>
-                  <li>Oben rechts auf das <b>Menü&nbsp;⋮</b> tippen.</li>
-                  <li><b>„App installieren"</b> bzw. <b>„Zum Startbildschirm hinzufügen"</b> wählen.</li>
-                  <li>Mit <b>„Hinzufügen"</b> / <b>„Installieren"</b> bestätigen.</li>
-                </ol>}
-            <p className="modal-note">
-              {detected === "other"
-                ? "Tipp: Öffne diese Seite auf deinem Handy – dort klappt die Installation."
-                : "Dein Gerät wurde automatisch erkannt. Oben kannst du bei Bedarf umschalten."}
-            </p>
+
+            {isStandalone
+              ? <p className="modal-sub">✅ Die App ist bereits auf dem Startbildschirm installiert –
+                  du hast sie ja gerade von dort geöffnet. Du kannst dieses Fenster schließen.</p>
+              : <>
+                  <p className="modal-sub">Du hast die Seite schon offen – so legst du sie als App
+                    auf den Startbildschirm:</p>
+                  <div className="platsw">
+                    <button className={"pbtn" + (plat === "ios" ? " on" : "")}
+                      onClick={() => setPlat("ios")}>iPhone / iPad</button>
+                    <button className={"pbtn" + (plat === "android" ? " on" : "")}
+                      onClick={() => setPlat("android")}>Android</button>
+                  </div>
+
+                  {detected === "other" &&
+                    <p className="modal-warn">Du bist gerade am Computer. Öffne die Seite auf dem
+                      Handy (z. B. den WhatsApp-Link antippen) und folge dann dieser Anleitung.</p>}
+
+                  {plat === "ios" &&
+                    <ol className="steps">
+                      {needSafari &&
+                        <li><b>Zuerst in Safari öffnen.</b> Das Ablegen geht nur in Safari. Falls du
+                          den Link aus WhatsApp o. Ä. geöffnet hast: tippe unten/oben auf das
+                          <b> Teilen-/„…"-Symbol</b> und wähle <b>„In Safari öffnen"</b>.</li>}
+                      <li>In Safari unten auf das <b>Teilen-Symbol</b> tippen (Quadrat mit Pfeil&nbsp;↑).</li>
+                      <li>Etwas nach unten scrollen und <b>„Zum Home-Bildschirm"</b> wählen.</li>
+                      <li>Oben rechts auf <b>„Hinzufügen"</b> tippen.</li>
+                    </ol>}
+
+                  {plat === "android" &&
+                    <ol className="steps">
+                      {needChrome &&
+                        <li><b>Zuerst in Chrome öffnen.</b> Tippe oben rechts auf <b>„⋮"</b> und
+                          wähle <b>„In Chrome öffnen"</b> bzw. <b>„Im Browser öffnen"</b>
+                          (so kommst du aus dem WhatsApp-Browser heraus).</li>}
+                      <li>Oben rechts auf das <b>Menü&nbsp;⋮</b> tippen.</li>
+                      <li><b>„App installieren"</b> bzw. <b>„Zum Startbildschirm hinzufügen"</b> wählen.</li>
+                      <li>Mit <b>„Hinzufügen"</b> / <b>„Installieren"</b> bestätigen.</li>
+                    </ol>}
+
+                  {!needSafari && !needChrome && detected !== "other" &&
+                    <p className="modal-note">Fehlt die Option? Dann läuft die Seite vielleicht in
+                      einem internen Browser (z. B. aus WhatsApp geöffnet). Tippe auf das Menü
+                      („…"/„⋮") und wähle „In {plat === "ios" ? "Safari" : "Chrome"} öffnen",
+                      dann nochmal probieren.</p>}
+                </>}
           </div>
         </div>
       );
