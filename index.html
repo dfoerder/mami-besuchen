@@ -749,18 +749,10 @@
     }
 
     function HelpModal({ onClose }) {
-      const ua = navigator.userAgent || "";
       const detected = detectPlatform();
       const isStandalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)
         || window.navigator.standalone === true;
-      const knownInApp = /(WhatsApp|FBAN|FBAV|FB_IAB|Instagram|Line\/|Snapchat|Telegram)/i.test(ua);
       const [plat, setPlat] = useState(detected === "other" ? "ios" : detected);
-
-      // Erkennen, ob die Seite (z. B. aus WhatsApp) in einem Browser läuft,
-      // in dem das Ablegen nicht geht → dann zuerst im richtigen Browser öffnen.
-      const needSafari = plat === "ios" &&
-        (/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua) || knownInApp || !/Safari/i.test(ua));
-      const needChrome = plat === "android" && (/;\s*wv\)/i.test(ua) || knownInApp);
 
       return (
         <div className="modal-bg" onClick={onClose}>
@@ -789,31 +781,17 @@
 
                   {plat === "ios" &&
                     <ol className="steps">
-                      {needSafari &&
-                        <li><b>Zuerst in Safari öffnen.</b> Das Ablegen geht nur in Safari. Falls du
-                          den Link aus WhatsApp o. Ä. geöffnet hast: tippe unten/oben auf das
-                          <b> Teilen-/„…"-Symbol</b> und wähle <b>„In Safari öffnen"</b>.</li>}
-                      <li>In Safari unten auf das <b>Teilen-Symbol</b> tippen (Quadrat mit Pfeil&nbsp;↑).</li>
+                      <li>Unten auf das <b>Teilen-Symbol</b> tippen (Quadrat mit Pfeil&nbsp;↑).</li>
                       <li>Etwas nach unten scrollen und <b>„Zum Home-Bildschirm"</b> wählen.</li>
                       <li>Oben rechts auf <b>„Hinzufügen"</b> tippen.</li>
                     </ol>}
 
                   {plat === "android" &&
                     <ol className="steps">
-                      {needChrome &&
-                        <li><b>Zuerst in Chrome öffnen.</b> Tippe oben rechts auf <b>„⋮"</b> und
-                          wähle <b>„In Chrome öffnen"</b> bzw. <b>„Im Browser öffnen"</b>
-                          (so kommst du aus dem WhatsApp-Browser heraus).</li>}
                       <li>Oben rechts auf das <b>Menü&nbsp;⋮</b> tippen.</li>
                       <li><b>„App installieren"</b> bzw. <b>„Zum Startbildschirm hinzufügen"</b> wählen.</li>
                       <li>Mit <b>„Hinzufügen"</b> / <b>„Installieren"</b> bestätigen.</li>
                     </ol>}
-
-                  {!needSafari && !needChrome && detected !== "other" &&
-                    <p className="modal-note">Fehlt die Option? Dann läuft die Seite vielleicht in
-                      einem internen Browser (z. B. aus WhatsApp geöffnet). Tippe auf das Menü
-                      („…"/„⋮") und wähle „In {plat === "ios" ? "Safari" : "Chrome"} öffnen",
-                      dann nochmal probieren.</p>}
                 </>}
           </div>
         </div>
