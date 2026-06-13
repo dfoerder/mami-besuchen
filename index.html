@@ -605,8 +605,8 @@
             {showDay && <span className="rday">{fmtDay(note.datum)}</span>}
             {showDay && note.zeit && <span className="rslot">{SLOT_LABEL[note.zeit] || note.zeit}</span>}
             <span className="rtime">{fmtDateTime(note.ms)}</span>
-            <button className="ndel" title="Bemerkung löschen"
-              onClick={() => { if (confirm("Diese Bemerkung wirklich löschen?")) onDeleteNote(note.id); }}>×</button>
+            <button className="ndel" title="Notiz löschen"
+              onClick={() => { if (confirm("Diese Notiz wirklich löschen?")) onDeleteNote(note.id); }}>×</button>
           </div>
           <div className="rtext">{note.text}</div>
           {comments.length > 0 &&
@@ -638,7 +638,7 @@
       return (
         <div className="notes">
           {sorted.length === 0
-            ? <div className="note-empty">Noch keine Bemerkungen vorhanden.</div>
+            ? <div className="note-empty">Noch keine Notizen vorhanden.</div>
             : sorted.map(n => (
                 <RemarkCard key={n.id} note={n} showDay={true} onComment={onComment}
                   onDeleteNote={onDeleteNote} onDeleteComment={onDeleteComment} />
@@ -708,9 +708,9 @@
                 onDeleteComment={(id, c) => Store.removeComment(id, c)} />
             ))}
             {noteOpen
-              ? <NoteComposer btnLabel="Speichern" placeholder={"Bemerkung zu " + slot.label + " …"}
+              ? <NoteComposer btnLabel="Speichern" placeholder={"Notiz zu " + slot.label + " …"}
                   onSubmit={(a, t) => { Store.addNote(dateKey, slot.key, a, t); setNoteOpen(false); }} />
-              : <button className="addnote-btn" onClick={() => setNoteOpen(true)}>＋ Bemerkung</button>}
+              : <button className="addnote-btn" onClick={() => setNoteOpen(true)}>＋ Notiz</button>}
           </div>
         </div>
       );

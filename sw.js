@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mami-besuchen-v5';
+const CACHE_NAME = 'mami-besuchen-v6';
 const ASSETS = [
   './',
   './index.html',
