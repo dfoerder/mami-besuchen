@@ -257,7 +257,7 @@
 
     // ── Konfiguration ────────────────────────────────────────
     // Bei jeder veröffentlichten Änderung hochzählen (gleiche Nummer wie Cache in sw.js).
-    const APP_VERSION = "14";
+    const APP_VERSION = "15";
     const APP_DATE = "15. Juni 2026";
     const SIBLINGS = [
       { name: "Lucas",     color: "#2a6496" },
@@ -965,7 +965,7 @@
               onDeleteNote={id => Store.deleteNote(id)}
               onDeleteComment={(id, c) => Store.removeComment(id, c)} />}
 
-          <div className="appver">Version {APP_VERSION} · {APP_DATE}</div>
+          <div className="appver">v{APP_VERSION} · {APP_DATE}</div>
         </div>
       );
     }
