@@ -190,6 +190,9 @@
     .noteactions{display:flex;justify-content:flex-end;margin-top:9px}
     .notesubmit{background:var(--accent);color:#fff;border-radius:12px;padding:9px 18px;font-size:14px;font-weight:700}
     .notesubmit:disabled{opacity:.4}
+    .authlab{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px}
+    .authhint{font-size:13px;font-weight:600;color:var(--warn);background:var(--warn-bg);
+      border-radius:11px;padding:8px 12px;margin-bottom:10px}
 
     .rcard{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px 14px;margin:10px 0}
     .rhead{display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-wrap:wrap}
@@ -603,6 +606,7 @@
       const [autor, setAutor] = useState(getAuthor());
       const [text, setText] = useState("");
       const ok = autor.trim() && text.trim();
+      const needName = text.trim() && !autor.trim();
       const submit = () => {
         if (!ok) return;
         const a = autor.trim();
@@ -613,9 +617,11 @@
       return (
         <div className="notebox">
           {label && <div className="lab">{label}</div>}
+          <div className="authlab">Wer schreibt?</div>
           <AuthorSelect value={autor} onChange={setAutor} />
           <textarea className="notearea" placeholder={placeholder} value={text}
             onChange={e => setText(e.target.value)} />
+          {needName && <div className="authhint">↑ Bitte zuerst auswählen, wer du bist.</div>}
           <div className="noteactions">
             <button className="notesubmit" disabled={!ok} onClick={submit}>{btnLabel}</button>
           </div>
