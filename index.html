@@ -605,25 +605,28 @@
     function NoteComposer({ label, btnLabel, placeholder, onSubmit }) {
       const [autor, setAutor] = useState(getAuthor());
       const [text, setText] = useState("");
-      const ok = autor.trim() && text.trim();
-      const needName = text.trim() && !autor.trim();
+      const [warn, setWarn] = useState(false);
+      const showHint = !autor.trim() && (text.trim() || warn);
       const submit = () => {
-        if (!ok) return;
+        if (!autor.trim()) { setWarn(true); return; }
+        if (!text.trim()) return;
         const a = autor.trim();
         setAuthorLS(a);
         onSubmit(a, text.trim());
         setText("");
+        setWarn(false);
       };
+      const pickAutor = v => { setAutor(v); if (v.trim()) setWarn(false); };
       return (
         <div className="notebox">
           {label && <div className="lab">{label}</div>}
           <div className="authlab">Wer schreibt?</div>
-          <AuthorSelect value={autor} onChange={setAutor} />
+          <AuthorSelect value={autor} onChange={pickAutor} />
           <textarea className="notearea" placeholder={placeholder} value={text}
             onChange={e => setText(e.target.value)} />
-          {needName && <div className="authhint">↑ Bitte zuerst auswählen, wer du bist.</div>}
+          {showHint && <div className="authhint">↑ Bitte zuerst auswählen, wer du bist.</div>}
           <div className="noteactions">
-            <button className="notesubmit" disabled={!ok} onClick={submit}>{btnLabel}</button>
+            <button className="notesubmit" onClick={submit}>{btnLabel}</button>
           </div>
         </div>
       );
