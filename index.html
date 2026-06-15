@@ -207,8 +207,14 @@
     .ctext{font-size:13.5px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
     .replybtn{margin-top:9px;font-size:12.5px;font-weight:700;color:var(--accent-dark);
       background:var(--accent-bg);padding:6px 13px;border-radius:20px}
-    .ndel{font-size:18px;line-height:1;color:var(--muted);opacity:.55;padding:0 2px 0 6px}
-    .cdel{font-size:14px;line-height:1;color:var(--muted);opacity:.5;padding:0 1px 0 4px}
+    .ndel{margin-left:6px;flex-shrink:0;width:32px;height:32px;border-radius:50%;
+      font-size:21px;line-height:1;font-weight:600;color:var(--warn);background:var(--warn-bg);
+      display:flex;align-items:center;justify-content:center}
+    .ndel:active{transform:scale(.9)}
+    .cdel{margin-left:4px;flex-shrink:0;width:24px;height:24px;border-radius:50%;
+      font-size:16px;line-height:1;color:var(--warn);background:var(--warn-bg);
+      display:flex;align-items:center;justify-content:center}
+    .cdel:active{transform:scale(.9)}
     .rslot{font-size:11.5px;color:#6a4f87;font-weight:700;background:#efe9f3;padding:2px 9px;border-radius:11px}
 
     /* Bemerkungen innerhalb einer Zeit-Karte */
