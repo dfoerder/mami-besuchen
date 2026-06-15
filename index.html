@@ -313,11 +313,6 @@
       return "other";
     };
 
-    // Zuletzt gewählter Autor wird lokal gemerkt
-    const AUTHOR_KEY = "mami-besuchen-autor";
-    const getAuthor = () => { try { return localStorage.getItem(AUTHOR_KEY) || ""; } catch { return ""; } };
-    const setAuthorLS = a => { try { localStorage.setItem(AUTHOR_KEY, a); } catch {} };
-
     // ── Speicher-Schicht (Firebase oder lokaler Vorschaumodus) ──
     const cfg = window.FIREBASE_CONFIG || {};
     const USE_FB = cfg.apiKey && !String(cfg.apiKey).includes("DEIN_");
@@ -603,16 +598,15 @@
     }
 
     function NoteComposer({ label, btnLabel, placeholder, onSubmit }) {
-      const [autor, setAutor] = useState(getAuthor());
+      const [autor, setAutor] = useState("");
       const [text, setText] = useState("");
       const [warn, setWarn] = useState(false);
       const showHint = !autor.trim() && (text.trim() || warn);
       const submit = () => {
         if (!autor.trim()) { setWarn(true); return; }
         if (!text.trim()) return;
-        const a = autor.trim();
-        setAuthorLS(a);
-        onSubmit(a, text.trim());
+        onSubmit(autor.trim(), text.trim());
+        setAutor("");
         setText("");
         setWarn(false);
       };
