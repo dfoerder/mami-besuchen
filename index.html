@@ -116,6 +116,7 @@
     .addrow button:disabled{opacity:.4}
 
     .foot{text-align:center;font-size:11.5px;color:var(--muted);padding:6px 0 24px}
+    .appver{text-align:center;font-size:11px;color:var(--muted);opacity:.7;padding:10px 0 34px}
     .loading{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px}
 
     /* Ansicht-Umschalter */
@@ -255,6 +256,9 @@
     const { useState, useEffect, useRef, useMemo } = React;
 
     // ── Konfiguration ────────────────────────────────────────
+    // Bei jeder veröffentlichten Änderung hochzählen (gleiche Nummer wie Cache in sw.js).
+    const APP_VERSION = "14";
+    const APP_DATE = "15. Juni 2026";
     const SIBLINGS = [
       { name: "Lucas",     color: "#2a6496" },
       { name: "Thomas",    color: "#5a7a3a" },
@@ -960,6 +964,8 @@
             <NotesView notes={notes} onComment={(id, a, t) => Store.addComment(id, a, t)}
               onDeleteNote={id => Store.deleteNote(id)}
               onDeleteComment={(id, c) => Store.removeComment(id, c)} />}
+
+          <div className="appver">Version {APP_VERSION} · {APP_DATE}</div>
         </div>
       );
     }
