@@ -2,7 +2,7 @@
 
 Eine kleine PWA, mit der sich die fünf Geschwister (Lucas, Thomas, Barbara,
 Daniel, Christine) für die täglichen Besuche bei Mami im Pflegeheim eintragen.
-Pro Tag gibt es vier Zeiten: **Morgen, Mittag, Nachmittag, Abend**. Zusätzliche
+Pro Tag gibt es fünf Zeiten: **Morgen, Mittag, Nachmittag, Abend, Nacht**. Zusätzliche
 Besucher können mit Namen von Hand eingetragen werden.
 
 Kalenderbereich: **1. Juni 2026 bis 30. November 2026** (6 Monate).
@@ -59,7 +59,7 @@ service cloud.firestore {
       allow read: if true;
       allow write: if tag.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
                    && request.resource.data.keys().hasOnly(
-                        ['morgen','mittag','nachmittag','abend']);
+                        ['morgen','mittag','nachmittag','abend','nacht']);
     }
     match /bemerkungen/{id} {
       allow read: if true;
@@ -85,7 +85,8 @@ Sammlung `tage`, ein Dokument pro Tag (ID = `YYYY-MM-DD`):
   "morgen":     ["Lucas", "Nachbarin Erika"],
   "mittag":     ["Barbara"],
   "nachmittag": [],
-  "abend":      ["Daniel", "Christine"]
+  "abend":      ["Daniel", "Christine"],
+  "nacht":      []
 }
 ```
 
@@ -109,7 +110,7 @@ Sammlung `bemerkungen`, ein Dokument pro Bemerkung (automatische ID):
 }
 ```
 
-`zeit` ist eine der vier Besuchszeiten (`morgen`/`mittag`/`nachmittag`/`abend`).
+`zeit` ist eine der fünf Besuchszeiten (`morgen`/`mittag`/`nachmittag`/`abend`/`nacht`).
 `ms` ist der Erstellungszeitpunkt (für „neueste zuerst"). Kommentare werden per
 `arrayUnion` angehängt. Der Kalender (`tage`) bleibt davon unberührt.
 

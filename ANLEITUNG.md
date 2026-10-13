@@ -1,8 +1,8 @@
 # Mami besuchen – Anleitung 👵💚
 
 Mit dieser kleinen App tragen wir uns ein, **wer Mami wann besucht**, damit sie
-jeden Tag Besuch bekommt. Es gibt pro Tag vier Zeiten: **Morgen, Mittag,
-Nachmittag, Abend**. Jeder von uns hat einen eigenen Knopf; zusätzliche Besucher
+jeden Tag Besuch bekommt. Es gibt pro Tag fünf Zeiten: **Morgen, Mittag,
+Nachmittag, Abend, Nacht**. Jeder von uns hat einen eigenen Knopf; zusätzliche Besucher
 (z. B. Enkel oder Bekannte) kann man mit Namen von Hand eintragen.
 
 **Link:** https://dfoerder.github.io/mami-besuchen/
@@ -36,13 +36,13 @@ So liegt sie wie eine echte App auf dem Startbildschirm – ein Tipp genügt.
 
 1. Oben im **Streifen den Tag** antippen (oder mit den Pfeilen ‹ › blättern,
    „Heute" springt zum heutigen Tag).
-2. Bei der passenden Zeit (Morgen/Mittag/Nachmittag/Abend) auf **deinen Namen**
+2. Bei der passenden Zeit (Morgen/Mittag/Nachmittag/Abend/Nacht) auf **deinen Namen**
    tippen – er wird farbig = du kommst. Nochmal tippen = wieder austragen.
 3. **Andere Person** (z. B. ein Enkel): ins Feld „Weitere Person …" den Namen
    schreiben und auf **＋** tippen. Mit dem **×** wieder entfernen.
 
 ## Die Punkte unter den Tagen
-Unter jedem Tag siehst du **vier kleine Punkte** = die vier Zeiten.
+Unter jedem Tag siehst du **fünf kleine Punkte** = die fünf Zeiten.
 - **Grün** = für diese Zeit ist jemand eingetragen.
 - **Grau** = noch frei.
 

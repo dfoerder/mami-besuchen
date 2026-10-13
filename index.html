@@ -138,10 +138,10 @@
 
     /* Wochenansicht */
     .weekgrid{padding:8px 12px 26px}
-    .wkrow{display:grid;grid-template-columns:44px repeat(4,1fr);gap:4px;margin-bottom:4px}
+    .wkrow{display:grid;grid-template-columns:40px repeat(5,minmax(0,1fr));gap:3px;margin-bottom:4px}
     .wkhead{position:sticky;top:0;z-index:5;background:var(--bg);padding-top:2px}
     .wkhead .wkh{text-align:center;padding:4px 0}
-    .wkhead .wkh .l{font-size:11px;color:var(--muted);font-weight:700}
+    .wkhead .wkh .l{font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-weight:700}
     .wkday{background:var(--card);border-radius:11px;box-shadow:var(--shadow);
       display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5px 0}
     .wkday:disabled{opacity:.3}
@@ -257,8 +257,8 @@
 
     // ── Konfiguration ────────────────────────────────────────
     // Bei jeder veröffentlichten Änderung hochzählen (gleiche Nummer wie Cache in sw.js).
-    const APP_VERSION = "15";
-    const APP_DATE = "15. Juni 2026";
+    const APP_VERSION = "16";
+    const APP_DATE = "13. Okt. 2026";
     const SIBLINGS = [
       { name: "Lucas",     color: "#2a6496" },
       { name: "Thomas",    color: "#5a7a3a" },
@@ -272,6 +272,7 @@
       { key: "mittag",     label: "Mittag" },
       { key: "nachmittag", label: "Nachmittag" },
       { key: "abend",      label: "Abend" },
+      { key: "nacht",      label: "Nacht" },
     ];
     const SLOT_LABEL = Object.fromEntries(SLOTS.map(s => [s.key, s.label]));
     const WD   = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
@@ -297,7 +298,7 @@
       const k = toKey(new Date());
       return ALL_DAYS.includes(k) ? k : null;
     })();
-    const EMPTY_DAY = { morgen: [], mittag: [], nachmittag: [], abend: [] };
+    const EMPTY_DAY = { morgen: [], mittag: [], nachmittag: [], abend: [], nacht: [] };
     const EXTRA_COLOR = "#8a7e9e"; // Farbe für Zusatzpersonen
 
     const addDays   = (d, n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
