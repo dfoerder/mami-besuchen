@@ -38,7 +38,7 @@ So liegt sie wie eine echte App auf dem Startbildschirm – ein Tipp genügt.
    „Heute" springt zum heutigen Tag).
 2. Bei der passenden Zeit (Morgen/Mittag/Nachmittag/Abend/Nacht) auf **deinen Namen**
    tippen – er wird farbig = du kommst. Nochmal tippen = wieder austragen.
-3. **Andere Person** (z. B. ein Enkel): ins Feld „Weitere Person …" den Namen
+3. **Andere Person** (z. B. ein Enkel): ins Feld „Andere Person …" den Namen
    schreiben und auf **＋** tippen. Mit dem **×** wieder entfernen.
 
 ## Die Punkte unter den Tagen

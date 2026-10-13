@@ -257,7 +257,7 @@
 
     // ── Konfiguration ────────────────────────────────────────
     // Bei jeder veröffentlichten Änderung hochzählen (gleiche Nummer wie Cache in sw.js).
-    const APP_VERSION = "16";
+    const APP_VERSION = "17";
     const APP_DATE = "13. Okt. 2026";
     const SIBLINGS = [
       { name: "Lucas",     color: "#2a6496" },
@@ -740,7 +740,7 @@
             </div>
           )}
           <div className="addrow">
-            <input type="text" placeholder="Weitere Person …" value={txt}
+            <input type="text" placeholder="Andere Person …" value={txt}
               onChange={e => setTxt(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") addExtra(); }} />
             <button onClick={addExtra} disabled={!txt.trim()}>＋</button>
