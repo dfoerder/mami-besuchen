@@ -1,8 +1,9 @@
-const CACHE_NAME = 'mami-besuchen-v18';
+const CACHE_NAME = 'mami-besuchen-v19';
 const ASSETS = [
   './',
   './index.html',
   './config.js',
+  './bugs.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',

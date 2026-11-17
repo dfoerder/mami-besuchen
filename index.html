@@ -249,6 +249,7 @@
       padding:11px 13px;border-radius:12px;margin-bottom:14px;font-weight:600}
   </style>
   <script data-goatcounter="https://dfoerder.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+  <script src="bugs.js" data-repo="dfoerder/mami-besuchen" data-app="mami-besuchen"></script>
 </head>
 <body>
   <div id="root"><div class="loading">Lädt …</div></div>
@@ -258,8 +259,8 @@
 
     // ── Konfiguration ────────────────────────────────────────
     // Bei jeder veröffentlichten Änderung hochzählen (gleiche Nummer wie Cache in sw.js).
-    const APP_VERSION = "18";
-    const APP_DATE = "13. Okt. 2026";
+    const APP_VERSION = "19";
+    const APP_DATE = "17. Nov. 2026";
     const SIBLINGS = [
       { name: "Lucas",     color: "#2a6496" },
       { name: "Thomas",    color: "#5a7a3a" },
@@ -967,7 +968,7 @@
               onDeleteNote={id => Store.deleteNote(id)}
               onDeleteComment={(id, c) => Store.removeComment(id, c)} />}
 
-          <div className="appver">v{APP_VERSION} · {APP_DATE}</div>
+          <div className="appver" data-bug-tap="1">v{APP_VERSION} · {APP_DATE}</div>
         </div>
       );
     }
