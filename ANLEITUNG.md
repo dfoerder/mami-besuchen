@@ -1,6 +1,6 @@
-# Mami besuchen – Anleitung 👵💚
+# Tante Ruth besuchen – Anleitung 👵💚
 
-Mit dieser kleinen App tragen wir uns ein, **wer Mami wann besucht**, damit sie
+Mit dieser kleinen App tragen wir uns ein, **wer Tante Ruth wann besucht**, damit sie
 jeden Tag Besuch bekommt. Es gibt pro Tag fünf Zeiten: **Morgen, Mittag,
 Nachmittag, Abend, Nacht**. Jeder von uns hat einen eigenen Knopf; zusätzliche Besucher
 (z. B. Enkel oder Bekannte) kann man mit Namen von Hand eintragen.
@@ -21,7 +21,7 @@ So liegt sie wie eine echte App auf dem Startbildschirm – ein Tipp genügt.
 2. Unten auf das **Teilen-Symbol** tippen (Quadrat mit Pfeil nach oben ⬆️).
 3. Etwas nach unten scrollen → **„Zum Home-Bildschirm"**.
 4. Oben rechts auf **„Hinzufügen"**.
-→ Das Herz-Symbol „Mami besuchen" liegt jetzt auf dem Startbildschirm.
+→ Das Herz-Symbol „Ruth besuchen" liegt jetzt auf dem Startbildschirm.
 
 ### Android (Chrome)
 1. Link **in Chrome** öffnen.
@@ -46,7 +46,7 @@ Unter jedem Tag siehst du **fünf kleine Punkte** = die fünf Zeiten.
 - **Grün** = für diese Zeit ist jemand eingetragen.
 - **Grau** = noch frei.
 
-So sieht man sofort, wo Mami noch Besuch fehlt. Steht oben ein gelber Hinweis,
+So sieht man sofort, wo Tante Ruth noch Besuch fehlt. Steht oben ein gelber Hinweis,
 ist für diesen Tag noch **gar niemand** eingetragen.
 
 ---

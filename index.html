@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-  <meta name="apple-mobile-web-app-title" content="Mami besuchen"/>
+  <meta name="apple-mobile-web-app-title" content="Ruth besuchen"/>
   <meta name="theme-color" content="#7a9a5a"/>
   <link rel="manifest" href="manifest.json"/>
   <link rel="apple-touch-icon" href="icon-192.png"/>
-  <title>Mami besuchen</title>
+  <title>Tante Ruth besuchen</title>
 
   <!-- React + Babel (kein Build-Schritt, wie in der Bibel-App) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -264,7 +264,7 @@
 
     // ── Konfiguration ────────────────────────────────────────
     // Bei jeder veröffentlichten Änderung hochzählen (gleiche Nummer wie Cache in sw.js).
-    const APP_VERSION = "20";
+    const APP_VERSION = "21";
     const APP_DATE = "24. Nov. 2026";
     const SIBLINGS = [
       { name: "Lucas",     color: "#2a6496" },
@@ -289,9 +289,10 @@
     const MO   = ["Jan","Feb","März","Apr","Mai","Juni","Juli","Aug","Sep","Okt","Nov","Dez"];
     const MO_L = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
 
-    // Kalenderbereich: 1. Juni 2026 → 6 Monate (bis 30. November 2026)
-    const START = new Date(2026, 5, 1);
-    const END   = new Date(2026, 10, 30);
+    // Kalenderbereich: ab 24. November 2026, offenes Ende
+    // (es wird immer bis ein Jahr nach heute angezeigt)
+    const START = new Date(2026, 10, 24);
+    const END   = (() => { const d = new Date(); d.setHours(0,0,0,0); d.setFullYear(d.getFullYear() + 1); return d; })();
 
     const pad = n => String(n).padStart(2, "0");
     const toKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -989,10 +990,10 @@
           <div className="hdr">
             <button className="help-btn" onClick={() => setHelpOpen(true)}
               aria-label="Hilfe: App installieren">?</button>
-            <h1>Mami besuchen
+            <h1>Tante Ruth besuchen
               {!USE_FB && <span className="offline-dot">Vorschau</span>}
             </h1>
-            <div className="sub">Wer besucht Mami wann?</div>
+            <div className="sub">Wer besucht Tante Ruth wann?</div>
           </div>
           {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
 

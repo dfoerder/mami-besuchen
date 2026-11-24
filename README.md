@@ -1,11 +1,16 @@
-# Mami besuchen 👵💚
+# Tante Ruth besuchen 👵💚
 
-Eine kleine PWA, mit der sich die fünf Geschwister (Lucas, Thomas, Barbara,
-Daniel, Christine) für die täglichen Besuche bei Mami im Pflegeheim eintragen.
+Eine kleine PWA, mit der sich die Familie (Lucas, Thomas, Barbara, Daniel,
+Christine, Eliane, Eleonore) für die täglichen Besuche bei Tante Ruth eintragen.
 Pro Tag gibt es fünf Zeiten: **Morgen, Mittag, Nachmittag, Abend, Nacht**. Zusätzliche
 Besucher können mit Namen von Hand eingetragen werden.
 
-Kalenderbereich: **1. Juni 2026 bis 30. November 2026** (6 Monate).
+Kalenderbereich: **ab 24. November 2026, offenes Ende** (angezeigt wird immer
+bis ein Jahr nach heute).
+
+Bis November 2026 wurde die App für Mami genutzt; ihre Notizen und Besuche
+wurden vorher über den Reiter „Notizen“ exportiert (Sicherung als JSON) und
+dann gelöscht. Adresse und Firebase-Projekt (`mami-besuchen`) sind geblieben.
 
 ## Aufbau
 
@@ -102,7 +107,7 @@ Sammlung `bemerkungen`, ein Dokument pro Bemerkung (automatische ID):
   "datum": "2026-06-12",
   "zeit": "nachmittag",
   "autor": "Daniel",
-  "text": "Mami war heute gut gelaunt.",
+  "text": "Tante Ruth war heute gut gelaunt.",
   "ms": 1749724800000,
   "kommentare": [
     { "autor": "Barbara", "text": "Schön! Ich komme morgen.", "ms": 1749728400000 }

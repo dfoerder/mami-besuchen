@@ -1,7 +1,7 @@
 {
-  "name": "Mami besuchen",
-  "short_name": "Mami besuchen",
-  "description": "Gemeinsamer Besuchskalender für Mami im Pflegeheim",
+  "name": "Tante Ruth besuchen",
+  "short_name": "Ruth besuchen",
+  "description": "Gemeinsamer Besuchskalender für Tante Ruth",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
