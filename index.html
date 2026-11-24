@@ -173,6 +173,11 @@
     .subhd{font-size:13px;font-weight:700;color:var(--muted);margin:20px 4px 2px}
     .note-empty{background:var(--bg2);color:var(--muted);font-size:13px;text-align:center;
       padding:16px;border-radius:14px;margin:11px 4px;font-weight:600}
+    .notetools{display:flex;flex-wrap:wrap;gap:7px;margin:4px 4px 6px}
+    .ntool{flex:1 1 auto;padding:9px 12px;border-radius:12px;font-size:13px;font-weight:700;
+      color:var(--accent-dark);background:var(--accent-bg)}
+    .ntool.danger{color:var(--warn);background:var(--warn-bg)}
+    .ntool:disabled{opacity:.4}
     .notebox{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:14px 15px;margin:11px 0}
     .notebox .lab{font-size:14px;font-weight:700;margin-bottom:9px}
     .authsel{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
@@ -259,14 +264,16 @@
 
     // ── Konfiguration ────────────────────────────────────────
     // Bei jeder veröffentlichten Änderung hochzählen (gleiche Nummer wie Cache in sw.js).
-    const APP_VERSION = "19";
-    const APP_DATE = "17. Nov. 2026";
+    const APP_VERSION = "20";
+    const APP_DATE = "24. Nov. 2026";
     const SIBLINGS = [
       { name: "Lucas",     color: "#2a6496" },
       { name: "Thomas",    color: "#5a7a3a" },
       { name: "Barbara",   color: "#b34a28" },
       { name: "Daniel",    color: "#7a5a9a" },
       { name: "Christine", color: "#c79a2a" },
+      { name: "Eliane",    color: "#2a8a86" },
+      { name: "Eleonore",  color: "#a8467a" },
     ];
     const SIB_NAMES = SIBLINGS.map(s => s.name);
     const SLOTS = [
@@ -448,6 +455,33 @@
         } else {
           const all = (() => { try { return JSON.parse(localStorage.getItem(NOTES_KEY)) || []; } catch { return []; } })();
           localStorage.setItem(NOTES_KEY, JSON.stringify(all.filter(x => x.id !== noteId)));
+          window._notesRefresh && window._notesRefresh();
+        }
+      },
+      // Alle Besuche leeren: jeden Tag mit leeren Listen überschreiben
+      // (die Firestore-Regeln erlauben kein Löschen von Tagen, aber Überschreiben)
+      async clearAllDays(keys) {
+        if (fbDb) {
+          for (let i = 0; i < keys.length; i += 400) {
+            const batch = fbDb.batch();
+            keys.slice(i, i + 400).forEach(k => batch.set(fbDb.collection("tage").doc(k), EMPTY_DAY));
+            await batch.commit();
+          }
+        } else {
+          localStorage.setItem(LS_KEY, JSON.stringify({}));
+          window._localRefresh && window._localRefresh();
+        }
+      },
+      // Alle Notizen löschen (Firestore: in Paketen à max. 500)
+      async deleteAllNotes(ids) {
+        if (fbDb) {
+          for (let i = 0; i < ids.length; i += 400) {
+            const batch = fbDb.batch();
+            ids.slice(i, i + 400).forEach(id => batch.delete(fbDb.collection("bemerkungen").doc(id)));
+            await batch.commit();
+          }
+        } else {
+          localStorage.setItem(NOTES_KEY, JSON.stringify([]));
           window._notesRefresh && window._notesRefresh();
         }
       },
@@ -681,10 +715,85 @@
       );
     }
 
-    function NotesView({ notes, onComment, onDeleteNote, onDeleteComment }) {
+    // ── Export der Notizen ───────────────────────────────────
+    const notesAsText = notes => {
+      const sorted = notes.slice().sort((a, b) =>
+        (a.datum || "").localeCompare(b.datum || "") || a.ms - b.ms);
+      const lines = [`Notizen – exportiert am ${fmtDateTime(Date.now())}`, `${sorted.length} Notizen`, ""];
+      let lastDay = null;
+      sorted.forEach(n => {
+        if (n.datum !== lastDay) {
+          const d = fromKey(n.datum);
+          lines.push("", `═══ ${WD[d.getDay()]}, ${d.getDate()}. ${MO_L[d.getMonth()]} ${d.getFullYear()} ═══`);
+          lastDay = n.datum;
+        }
+        lines.push("", `[${SLOT_LABEL[n.zeit] || n.zeit || "–"}] ${n.autor} (${fmtDateTime(n.ms)}):`, n.text);
+        (n.kommentare || []).slice().sort((a, b) => a.ms - b.ms).forEach(c => {
+          lines.push(`   ↳ ${c.autor} (${fmtDateTime(c.ms)}): ${c.text.replace(/\n/g, "\n     ")}`);
+        });
+      });
+      return lines.join("\n") + "\n";
+    };
+
+    // Datei teilen (Handy: Teilen-Menü → sichern/WhatsApp/Mail) oder herunterladen
+    async function saveFile(filename, content, type) {
+      const blob = new Blob([content], { type });
+      try {
+        const file = new File([blob], filename, { type });
+        if (navigator.canShare && navigator.canShare({ files: [file] }) && detectPlatform() !== "other") {
+          await navigator.share({ files: [file], title: filename });
+          return;
+        }
+      } catch (e) {
+        if (e && e.name === "AbortError") return; // Teilen abgebrochen
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
+    // Doppelte Sicherheitsabfrage vor endgültigem Löschen
+    const confirmDanger = question => {
+      if (!confirm(question + "\n\nBitte vorher die Sicherung (JSON) exportieren – " +
+                   "Gelöschtes kann sonst nicht wiederhergestellt werden.")) return false;
+      const answer = prompt("Zur Sicherheit bitte das Wort LÖSCHEN eintippen:");
+      if (!answer || answer.trim().toUpperCase() !== "LÖSCHEN") { alert("Nichts gelöscht."); return false; }
+      return true;
+    };
+
+    function NotesView({ data, notes, onComment, onDeleteNote, onDeleteComment }) {
       const sorted = notes.slice().sort((a, b) => b.ms - a.ms);
+      const stamp = toKey(new Date());
+      // nur Tage mit mindestens einem Eintrag
+      const visitDays = Object.keys(data || {}).filter(k =>
+        SLOTS.some(s => (data[k][s.key] || []).length)).sort();
+      const exportText = () => saveFile(`notizen-${stamp}.txt`, notesAsText(notes), "text/plain;charset=utf-8");
+      const exportJson = () => saveFile(`sicherung-${stamp}.json`, JSON.stringify({
+        exportiert: new Date().toISOString(),
+        bemerkungen: notes.slice().sort((a, b) => a.ms - b.ms),
+        tage: Object.fromEntries(visitDays.map(k => [k, data[k]])),
+      }, null, 2), "application/json");
+      const deleteAllNotes = async () => {
+        if (!confirmDanger(`Wirklich ALLE ${notes.length} Notizen löschen?`)) return;
+        try { await Store.deleteAllNotes(notes.map(n => n.id)); alert("Alle Notizen wurden gelöscht."); }
+        catch (e) { reportWriteError(e); }
+      };
+      const deleteAllVisits = async () => {
+        if (!confirmDanger(`Wirklich ALLE Besuchseinträge im Kalender löschen (${visitDays.length} ${visitDays.length === 1 ? "Tag" : "Tage"})?`)) return;
+        try { await Store.clearAllDays(Object.keys(data || {})); alert("Alle Besuchseinträge wurden gelöscht."); }
+        catch (e) { reportWriteError(e); }
+      };
       return (
         <div className="notes">
+          <div className="notetools">
+            <button className="ntool" onClick={exportText} disabled={!notes.length}>⬇︎ Notizen exportieren (Text)</button>
+            <button className="ntool" onClick={exportJson}
+              disabled={!notes.length && !visitDays.length}>⬇︎ Sicherung: Notizen + Besuche (JSON)</button>
+            <button className="ntool danger" onClick={deleteAllNotes} disabled={!notes.length}>Alle Notizen löschen</button>
+            <button className="ntool danger" onClick={deleteAllVisits} disabled={!visitDays.length}>Alle Besuche löschen</button>
+          </div>
           {sorted.length === 0
             ? <div className="note-empty">Noch keine Notizen vorhanden.</div>
             : sorted.map(n => (
@@ -964,7 +1073,7 @@
           </>}
 
           {view === "notizen" &&
-            <NotesView notes={notes} onComment={(id, a, t) => Store.addComment(id, a, t)}
+            <NotesView data={data} notes={notes} onComment={(id, a, t) => Store.addComment(id, a, t)}
               onDeleteNote={id => Store.deleteNote(id)}
               onDeleteComment={(id, c) => Store.removeComment(id, c)} />}
 
